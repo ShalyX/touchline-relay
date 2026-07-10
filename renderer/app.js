@@ -44,6 +44,7 @@
     joinedRoomName: document.querySelector('#joined-room-name'),
     roomKey: document.querySelector('#room-key'),
     copyRoom: document.querySelector('#copy-room'),
+    leaveRoom: document.querySelector('#leave-room'),
     connectionLabel: document.querySelector('#connection-label'),
     p2pStatus: document.querySelector('#p2p-status'),
     relayHealth: document.querySelector('#relay-health'),
@@ -95,6 +96,8 @@
           room: message.room,
           peers: message.peers
         })
+      } else if (message.type === 'left') {
+        state = reduceState(state, { type: 'room/left' })
       } else if (message.type === 'status' || message.type === 'peer') {
         state = reduceState(state, {
           type: 'room/status',
@@ -102,19 +105,25 @@
           peers: message.peers
         })
       } else if (message.type === 'announcement') {
-        const announcement = { ...message.announcement, localSource: 'peer' }
+        const announcement = { ...message.announcement, localSource: 'peer', ackCount: 0 }
         state = reduceState(state, { type: 'announcement/received', announcement })
+      } else if (message.type === 'ack') {
+        state = reduceState(state, {
+          type: 'announcement/ack',
+          announcementId: message.announcementId,
+          peerId: message.peerId
+        })
       } else if (message.type === 'published') {
         if (pendingAnnouncement && pendingAnnouncement.id === message.id) {
           state = reduceState(state, {
             type: 'announcement/received',
-            announcement: { ...pendingAnnouncement, localSource: 'this-device' }
+            announcement: { ...pendingAnnouncement, localSource: 'this-device', ackCount: 0 }
           })
         }
         state = reduceState(state, { type: 'composer/published', id: message.id })
         pendingAnnouncement = null
         publishing = false
-        els.publishNote.textContent = `Accepted by the local relay at ${new Date().toLocaleTimeString()}. This does not confirm receipt by every peer.`
+        els.publishNote.textContent = `Accepted by the local relay at ${new Date().toLocaleTimeString()}. Peer receipts arrive as ACKs from connected peers.`
       } else if (message.type === 'error') {
         publishing = false
         state = reduceState(state, { type: 'error', message: message.message })
@@ -161,7 +170,10 @@
     if (!state.room) return showError('Join a room before translating.')
     if (!els.venue.value) return showError('Choose a venue.')
     if (!originalBody) return showError('Write an announcement before translating.')
-    if (els.language.value !== 'es') return showError('The MVP ships English to Spanish only.')
+    const targetLanguage = els.language.value || 'es'
+    if (!['es', 'fr', 'de', 'pt'].includes(targetLanguage)) {
+      return showError('Supported targets: Spanish, French, German, Portuguese.')
+    }
 
     state = reduceState(state, { type: 'composer/translating' })
     render()
@@ -169,15 +181,20 @@
     const started = performance.now()
     try {
       if (!hasBridge) throw new Error('Bridge unavailable in demo preview')
-      const result = await apiBridge.translateToSpanish(originalBody)
+      const result = apiBridge.translate
+        ? await apiBridge.translate(originalBody, targetLanguage)
+        : await apiBridge.translateToSpanish(originalBody)
       translatedBody = result.text
+      const lang = result.targetLanguage || targetLanguage
       state = reduceState(state, {
         type: 'composer/translated',
         original: originalBody,
-        translated: translatedBody
+        translated: translatedBody,
+        targetLanguage: lang
       })
-      els.translationMeta.textContent = `BERGAMOT_EN_ES · ${Math.round(performance.now() - started)} ms · No cloud API`
-      appendProof('qvac -> translated locally with BERGAMOT_EN_ES')
+      const modelTag = `BERGAMOT_EN_${String(lang).toUpperCase()}`
+      els.translationMeta.textContent = `${modelTag} · ${Math.round(performance.now() - started)} ms · No cloud API`
+      appendProof(`qvac -> translated locally with ${modelTag}`)
     } catch (err) {
       showError(`Local translation needs attention: ${err.message}`)
     }
@@ -194,12 +211,15 @@
     publishing = true
     render()
     try {
+      const targetLanguage =
+        (state.preview && state.preview.targetLanguage) || els.language.value || 'es'
       const announcement = await makeAnnouncement({
         room: state.room,
         venue: els.venue.value,
         priority: els.priority.value,
         body: originalBody,
-        translatedBody
+        translatedBody,
+        targetLanguage
       })
       pendingAnnouncement = announcement
       await sendWorker({ type: 'publish', announcement })
@@ -238,6 +258,18 @@
       els.copyRoom.textContent = 'Copy key'
     }, 1200)
   })
+
+  if (els.leaveRoom) {
+    els.leaveRoom.addEventListener('click', async () => {
+      if (!state.room && state.p2pStatus !== 'joining') return
+      try {
+        await sendWorker({ type: 'leave' })
+        appendProof('renderer -> requested leave')
+      } catch (err) {
+        showError(`Could not leave room: ${err.message}`)
+      }
+    })
+  }
 
   els.proofToggle.addEventListener('click', () => openDrawer('proof', els.proofToggle))
   els.proofClose.addEventListener('click', closeDrawers)
@@ -310,6 +342,7 @@
     const realAndFixtureHistory = [...state.fixtureHistory, ...state.history]
 
     document.body.classList.toggle('room-joined', joined)
+    if (els.leaveRoom) els.leaveRoom.disabled = !joined && !joining
     els.join.disabled = joining
     els.join.textContent = joining ? 'Joining…' : 'Join room'
     els.topRoom.textContent = joined
@@ -425,12 +458,15 @@
       `${sample ? 'Local visual sample' : 'Announcement'} at ${announcement.venue}`
     )
     const created = announcement.createdAt ? new Date(announcement.createdAt) : new Date()
+    const ackCount = announcement.ackCount || (state.acks[announcement.id] || []).length
     const footer = sample
       ? 'Local sample · no relay activity'
       : announcement.localSource === 'this-device'
-        ? 'Sent by this device · local relay accepted'
+        ? `Sent by this device · local relay accepted · ${ackCount} peer receipt${ackCount === 1 ? '' : 's'}`
         : `Received · ${escapeHtml(truncateId(announcement.id, 10))}`
-    const es = (announcement.translations && announcement.translations.es) || ''
+    const translations = announcement.translations || {}
+    const translatedLang = Object.keys(translations)[0] || 'es'
+    const es = translations[translatedLang] || ''
     item.innerHTML = `
     <div class="history-meta">
       <strong>${escapeHtml(announcement.venue)}</strong>
@@ -438,7 +474,7 @@
       <time datetime="${escapeHtml(created.toISOString())}" title="${escapeHtml(created.toLocaleString())}">${escapeHtml(created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</time>
     </div>
     <p class="history-copy" lang="en">${escapeHtml(announcement.body)}</p>
-    <p class="history-copy translated" lang="es">${escapeHtml(es)}</p>
+    <p class="history-copy translated" lang="${escapeHtml(translatedLang)}">${escapeHtml(es)}</p>
     <div class="history-footer">${footer}</div>
   `
     const select = () => {
@@ -510,19 +546,27 @@
     await apiBridge.writeWorkerIPC(worker, encoder.encode(JSON.stringify(command)))
   }
 
-  async function makeAnnouncement({ room, venue, priority, body, translatedBody }) {
+  async function makeAnnouncement({
+    room,
+    venue,
+    priority,
+    body,
+    translatedBody,
+    targetLanguage = 'es'
+  }) {
     const createdAt = new Date().toISOString()
+    const lang = targetLanguage || 'es'
     const base = {
       type: 'touchline.announcement.v1',
       room,
       venue,
       priority,
       body,
-      translations: { es: translatedBody },
+      translations: { [lang]: translatedBody },
       createdAt
     }
     const id = await sha256(JSON.stringify(base))
-    return { id, ...base }
+    return { id, ...base, ackCount: 0 }
   }
 
   async function sha256(text) {

@@ -9,6 +9,7 @@ function createInitialState() {
     history: [],
     fixtureHistory: [],
     lastPublishedId: null,
+    acks: {},
     error: ''
   }
 }
@@ -31,6 +32,15 @@ function reduceState(state, action) {
         p2pStatus: 'joined',
         error: ''
       }
+    case 'room/left':
+      return {
+        ...state,
+        room: '',
+        pendingRoom: '',
+        peerCount: 0,
+        p2pStatus: 'idle',
+        error: ''
+      }
     case 'room/status':
       return { ...state, peerCount: action.peers, p2pStatus: action.status || state.p2pStatus }
     case 'composer/translating':
@@ -39,7 +49,12 @@ function reduceState(state, action) {
       return {
         ...state,
         translationStatus: 'ready',
-        preview: { original: action.original, translated: action.translated, status: 'ready' },
+        preview: {
+          original: action.original,
+          translated: action.translated,
+          targetLanguage: action.targetLanguage || 'es',
+          status: 'ready'
+        },
         error: ''
       }
     case 'composer/edited':
@@ -50,6 +65,7 @@ function reduceState(state, action) {
         ...state,
         lastPublishedId: action.id,
         preview: state.preview ? { ...state.preview, status: 'published' } : state.preview,
+        acks: { ...state.acks, [action.id]: state.acks[action.id] || [] },
         error: ''
       }
     case 'announcement/published':
@@ -57,6 +73,20 @@ function reduceState(state, action) {
     case 'announcement/received':
       if (state.history.some((item) => item.id === action.announcement.id)) return state
       return { ...state, history: [action.announcement, ...state.history].slice(0, 50) }
+    case 'announcement/ack': {
+      const list = state.acks[action.announcementId] || []
+      if (list.includes(action.peerId)) return state
+      return {
+        ...state,
+        acks: {
+          ...state.acks,
+          [action.announcementId]: [...list, action.peerId]
+        },
+        history: state.history.map((item) =>
+          item.id === action.announcementId ? { ...item, ackCount: (item.ackCount || 0) + 1 } : item
+        )
+      }
+    }
     case 'fixture/shown':
       return { ...state, fixtureHistory: [action.announcement] }
     case 'error':

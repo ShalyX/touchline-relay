@@ -10,7 +10,8 @@ test('renderer state tracks join, translation preview, publish, and incoming his
   state = reduceState(state, {
     type: 'composer/translated',
     original: 'Warmups start in ten minutes.',
-    translated: 'Los calentamientos empiezan en diez minutos.'
+    translated: 'Los calentamientos empiezan en diez minutos.',
+    targetLanguage: 'es'
   })
   state = reduceState(state, { type: 'composer/published', id: 'a1' })
   state = reduceState(state, {
@@ -68,6 +69,33 @@ test('room is committed only after the worker confirms it joined', () => {
   assert.equal(state.room, 'cup-final')
   assert.equal(state.pendingRoom, '')
   assert.equal(state.p2pStatus, 'joined')
+})
+
+test('leave clears room membership without clearing history', () => {
+  let state = createInitialState()
+  state = reduceState(state, { type: 'room/joined', room: 'cup-final', peers: 2 })
+  state = reduceState(state, {
+    type: 'announcement/received',
+    announcement: { id: 'a1', venue: 'Pitch 1', priority: 'routine' }
+  })
+  state = reduceState(state, { type: 'room/left' })
+  assert.equal(state.room, '')
+  assert.equal(state.peerCount, 0)
+  assert.equal(state.p2pStatus, 'idle')
+  assert.equal(state.history.length, 1)
+})
+
+test('acks accumulate unique peer receipts for a published announcement', () => {
+  let state = createInitialState()
+  state = reduceState(state, {
+    type: 'announcement/received',
+    announcement: { id: 'a1', venue: 'Pitch 1', priority: 'urgent', localSource: 'this-device' }
+  })
+  state = reduceState(state, { type: 'announcement/ack', announcementId: 'a1', peerId: 'p1' })
+  state = reduceState(state, { type: 'announcement/ack', announcementId: 'a1', peerId: 'p1' })
+  state = reduceState(state, { type: 'announcement/ack', announcementId: 'a1', peerId: 'p2' })
+  assert.deepEqual(state.acks.a1, ['p1', 'p2'])
+  assert.equal(state.history[0].ackCount, 2)
 })
 
 test('fixture sample never changes real translation or relay health state', () => {

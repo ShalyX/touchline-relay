@@ -12,11 +12,14 @@ const {
 function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
   const peers = new Set()
   const duplicateFilter = createDuplicateFilter()
+  const ackFilter = createDuplicateFilter()
   let joined = null
+  let discovery = null
   let closed = false
+  let peerId = b4a.toString(swarm.keyPair.publicKey, 'hex')
 
   swarm.on('connection', (socket) => {
-    if (closed) {
+    if (closed || !joined) {
       socket.destroy()
       return
     }
@@ -46,17 +49,37 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
 
   async function join(room) {
     if (closed) throw new Error('Relay node is closed')
-    joined = String(room || '').trim()
-    if (!joined) throw new Error('Room is required')
+    const next = String(room || '').trim()
+    if (!next) throw new Error('Room is required')
+    if (joined && joined !== next) await leave()
+
+    joined = next
     const topic = deriveRoomKey(joined)
-    const discovery = swarm.join(topic, { server: true, client: true })
+    discovery = swarm.join(topic, { server: true, client: true })
     await discovery.flushed()
     const identity = {
       topic: b4a.toString(topic, 'hex'),
-      peerId: b4a.toString(swarm.keyPair.publicKey, 'hex')
+      peerId
     }
     emit({ type: 'status', status: 'joined', room: joined, peers: peers.size, ...identity })
     return { room: joined, peers: peers.size, ...identity }
+  }
+
+  async function leave() {
+    if (closed) throw new Error('Relay node is closed')
+    if (discovery) {
+      try {
+        await discovery.destroy()
+      } catch {
+        // ignore destroy races while tearing down a topic
+      }
+      discovery = null
+    }
+    for (const peer of peers) peer.destroy()
+    peers.clear()
+    joined = null
+    emit({ type: 'left', status: 'idle', room: '', peers: 0, peerId })
+    return { room: '', peers: 0, peerId }
   }
 
   async function publish(announcement) {
@@ -73,6 +96,14 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
 
   async function close() {
     closed = true
+    if (discovery) {
+      try {
+        await discovery.destroy()
+      } catch {
+        // ignore
+      }
+      discovery = null
+    }
     for (const peer of peers) peer.destroy()
     peers.clear()
     await swarm.destroy()
@@ -82,8 +113,29 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
     if (!line.trim()) return
     try {
       const message = parseWireMessage(line)
+      if (message.type === 'ack') {
+        const key = `${message.announcementId}:${message.peerId}`
+        if (!ackFilter.accepts(key)) return
+        emit({
+          type: 'ack',
+          announcementId: message.announcementId,
+          peerId: message.peerId,
+          peers: peers.size
+        })
+        return
+      }
+
       if (!duplicateFilter.accepts(message.announcement.id)) return
       emit({ type: 'announcement', announcement: message.announcement })
+
+      // Honest delivery receipt: receiver confirms acceptance to the sender only.
+      const ack = serializeWireMessage({
+        type: 'ack',
+        announcementId: message.announcement.id,
+        peerId
+      })
+      if (socket && !socket.destroyed) socket.write(ack)
+
       for (const peer of peers) {
         if (peer !== socket && !peer.destroyed) peer.write(serializeWireMessage(message))
       }
@@ -93,10 +145,16 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
   }
 
   function emitStatus(type) {
-    emit({ type, status: joined ? 'joined' : 'idle', room: joined, peers: peers.size })
+    emit({
+      type,
+      status: joined ? 'joined' : 'idle',
+      room: joined || '',
+      peers: peers.size,
+      peerId
+    })
   }
 
-  return { join, publish, flush: () => swarm.flush(), close }
+  return { join, leave, publish, flush: () => swarm.flush(), close, getPeerId: () => peerId }
 }
 
 module.exports = { createRelayNode }

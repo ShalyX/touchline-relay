@@ -19,7 +19,9 @@
     "start:demo-a": "electron-forge start -- --no-updates --storage /tmp/touchline-a --no-sandbox",
     "start:demo-b": "electron-forge start -- --no-updates --storage /tmp/touchline-b --no-sandbox",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "make:zip": "electron-forge make --targets=@electron-forge/maker-zip",
+    "release:linux-folder": "npm run package && node -e \"console.log('Package ready under out/')\""
   },
   "dependencies": {
     "@qvac/sdk": "^0.14.1",

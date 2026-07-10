@@ -7,7 +7,8 @@ const {
   makeAnnouncement,
   parseWireMessage,
   serializeWireMessage,
-  validateAnnouncement
+  validateAnnouncement,
+  validateAck
 } = require('../lib/protocol')
 
 test('deriveRoomKey returns a stable 32-byte topic without exposing the room label', () => {
@@ -35,12 +36,25 @@ test('validateAnnouncement accepts the structured MVP announcement shape', () =>
   assert.equal(announcement.translations.es, 'El inicio se traslada a las 14:30.')
 })
 
+test('validateAnnouncement accepts French target language', () => {
+  const announcement = makeAnnouncement({
+    room: 'cup-final',
+    venue: 'Pitch 2',
+    priority: 'important',
+    targetLanguage: 'fr',
+    body: 'Kickoff moves to 14:30.',
+    translatedBody: 'Le coup d’envoi passe à 14h30.'
+  })
+  assert.equal(validateAnnouncement(announcement).ok, true)
+  assert.equal(announcement.translations.fr, 'Le coup d’envoi passe à 14h30.')
+})
+
 test('validateAnnouncement rejects invalid priority, language, and overlong body', () => {
   const invalid = makeAnnouncement({
     room: 'cup-final',
     venue: 'Pitch 2',
     priority: 'critical',
-    targetLanguage: 'fr',
+    targetLanguage: 'xx',
     body: 'x'.repeat(421),
     translatedBody: 'ignored'
   })
@@ -51,11 +65,11 @@ test('validateAnnouncement rejects invalid priority, language, and overlong body
   assert.deepEqual(result.errors.sort(), [
     'body must be 1-420 characters',
     'priority must be routine, important, or urgent',
-    'translations.es must be present'
+    'translations must include a supported target language (es, fr, de, pt)'
   ])
 })
 
-test('wire serialization round-trips and rejects malformed payloads', () => {
+test('wire serialization round-trips announcements and acks', () => {
   const announcement = makeAnnouncement({
     room: 'cup-final',
     venue: 'Pitch 2',
@@ -66,9 +80,18 @@ test('wire serialization round-trips and rejects malformed payloads', () => {
   })
 
   const wire = serializeWireMessage({ type: 'announcement', announcement })
-
   assert.equal(wire.endsWith('\n'), true)
   assert.deepEqual(parseWireMessage(wire), { type: 'announcement', announcement })
+
+  const ack = {
+    type: 'ack',
+    announcementId: announcement.id,
+    peerId: 'peer-abc'
+  }
+  const ackWire = serializeWireMessage(ack)
+  assert.deepEqual(parseWireMessage(ackWire), ack)
+  assert.equal(validateAck(ack).ok, true)
+
   assert.throws(() => parseWireMessage('{'), /Invalid JSON/)
   assert.throws(
     () => parseWireMessage(JSON.stringify({ type: 'announcement', announcement: null })),

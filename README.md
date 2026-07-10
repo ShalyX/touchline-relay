@@ -202,6 +202,13 @@ Example translated line from live UI QA:
 
 Bergamot quality is operational, not human-editor grade. Venue tags stay structured so names remain unambiguous.
 
+## Nice-to-haves included
+
+- **Leave room** without restarting the app
+- **Peer receipt ACKs** (connected peers only — not universal delivery)
+- **Target languages:** Spanish, French, German, Portuguese (QVAC Bergamot EN→\*)
+- **Installer notes:** `scripts/make-release-notes.md` and `docs/roadmap.md`
+
 ## Limitations
 
 - English → Spanish only in MVP.

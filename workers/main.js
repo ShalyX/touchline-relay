@@ -41,6 +41,12 @@ async function handleCommand(command) {
     return
   }
 
+  if (command.type === 'leave') {
+    const status = await relay.leave()
+    write({ type: 'left', ...status })
+    return
+  }
+
   if (command.type === 'publish') {
     const result = await relay.publish(command.announcement)
     write({ type: 'published', id: command.announcement.id, peers: result.peers })

@@ -207,7 +207,20 @@ ipcMain.handle('qvac:translateToSpanish', async (evt, text) => {
   translationState.status = 'loading'
   translationState.error = ''
   try {
-    const result = await translator.translateToSpanish(text)
+    const result = await translator.translate(text, 'es')
+    translationState.status = 'ready'
+    return result
+  } catch (err) {
+    translationState.status = 'error'
+    translationState.error = err.message
+    throw err
+  }
+})
+ipcMain.handle('qvac:translate', async (evt, payload = {}) => {
+  translationState.status = 'loading'
+  translationState.error = ''
+  try {
+    const result = await translator.translate(payload.text, payload.targetLanguage || 'es')
     translationState.status = 'ready'
     return result
   } catch (err) {
