@@ -423,6 +423,89 @@
         border-top: 1px solid var(--line-strong);
       }
 
+      .template-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 14px;
+      }
+      .template-chip {
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--ink-secondary);
+        font-size: 11px;
+        letter-spacing: -0.01em;
+      }
+      .template-chip:hover:not(:disabled) {
+        border-color: rgba(243, 241, 236, 0.28);
+        color: var(--ink);
+      }
+      .venue-segment {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px;
+        padding: 2px;
+        min-height: 36px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface-2);
+      }
+      .venue-btn {
+        min-height: 30px;
+        padding: 0 6px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: -0.01em;
+      }
+      .venue-btn.is-active {
+        color: var(--ink);
+        background: var(--surface-3);
+        box-shadow: inset 0 0 0 1px var(--line-strong);
+      }
+      .history-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 10px 18px 4px;
+      }
+      .filter-chip {
+        min-height: 26px;
+        padding: 0 9px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .filter-chip.is-active {
+        border-color: var(--line-strong);
+        color: var(--ink);
+        background: var(--surface-2);
+      }
+      .invite-box {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-1);
+      }
+      .invite-box code {
+        display: block;
+        margin: 6px 0 8px;
+        color: var(--ink-secondary);
+        font-family: var(--mono);
+        font-size: 10px;
+        line-height: 1.45;
+        word-break: break-all;
+      }
       .structured-controls {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1049,6 +1132,11 @@
             <span>Connection</span><strong id="connection-label">Not joined</strong>
           </div>
           <div class="fact-row"><span>Peers</span><strong id="peer-count">0 · waiting</strong></div>
+          <div class="invite-box">
+            <span class="field-label">Invite peers</span>
+            <code id="invite-text">Join after selecting a room.</code>
+            <button id="copy-invite" class="quiet" type="button">Copy invite</button>
+          </div>
           <div class="room-actions">
             <button id="copy-room" class="quiet" type="button">Copy key</button>
             <button
@@ -1078,16 +1166,53 @@
           <span id="draft-status" class="draft-status">Not translated</span>
         </div>
 
+        <div class="field" style="margin-bottom: 10px">
+          <span class="field-label">Matchday templates</span>
+          <div id="templates" class="template-row" aria-label="Matchday templates"></div>
+        </div>
         <div class="structured-controls">
-          <label class="field" for="venue">
-            <span class="field-label">Venue</span>
-            <select id="venue">
-              <option>North Touchline</option>
-              <option>Pitch 1</option>
-              <option selected>Pitch 2</option>
-              <option>Main Gate</option>
-            </select>
-          </label>
+          <div class="field">
+            <span class="field-label" id="venue-label">Venue</span>
+            <div class="venue-segment" role="radiogroup" aria-labelledby="venue-label">
+              <button
+                type="button"
+                class="venue-btn"
+                data-venue="North Touchline"
+                role="radio"
+                aria-checked="false"
+              >
+                North Touchline
+              </button>
+              <button
+                type="button"
+                class="venue-btn"
+                data-venue="Pitch 1"
+                role="radio"
+                aria-checked="false"
+              >
+                Pitch 1
+              </button>
+              <button
+                type="button"
+                class="venue-btn is-active"
+                data-venue="Pitch 2"
+                role="radio"
+                aria-checked="true"
+              >
+                Pitch 2
+              </button>
+              <button
+                type="button"
+                class="venue-btn"
+                data-venue="Main Gate"
+                role="radio"
+                aria-checked="false"
+              >
+                Main Gate
+              </button>
+            </div>
+            <input type="hidden" id="venue" value="Pitch 2" />
+          </div>
           <div class="field">
             <span class="field-label" id="priority-label">Priority</span>
             <div class="segment" role="radiogroup" aria-labelledby="priority-label">
@@ -1218,7 +1343,10 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
           <div class="eyebrow">Evidence</div>
           <h2 id="proof-title">Runtime proof</h2>
         </div>
-        <button id="proof-close" class="quiet" type="button">Close</button>
+        <div style="display: flex; gap: 4px">
+          <button id="export-proof" class="quiet" type="button">Export</button>
+          <button id="proof-close" class="quiet" type="button">Close</button>
+        </div>
       </div>
       <section class="proof-section">
         <div class="field-label">Local translation</div>

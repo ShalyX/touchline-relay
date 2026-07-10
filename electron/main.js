@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Notification } = require('electron')
 const os = require('os')
 const path = require('path')
 
@@ -249,6 +249,19 @@ if (!lock) {
   app.on('second-instance', (evt, args) => {
     const url = args.find((arg) => arg.startsWith(protocol + '://'))
     if (url) handleDeepLink(url)
+  })
+
+  ipcMain.handle('app:notify', (evt, payload = {}) => {
+    if (!Notification.isSupported()) return { ok: false, reason: 'unsupported' }
+    const title = String(payload.title || 'Touchline Relay')
+    const body = String(payload.body || '').slice(0, 180)
+    const note = new Notification({
+      title,
+      body,
+      silent: false
+    })
+    note.show()
+    return { ok: true }
   })
 
   app.whenReady().then(() => {

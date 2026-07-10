@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('bridge', {
   translate: (text, targetLanguage = 'es') =>
     ipcRenderer.invoke('qvac:translate', { text, targetLanguage }),
   getTranslationState: () => ipcRenderer.invoke('qvac:state'),
+  notify: (payload) => ipcRenderer.invoke('app:notify', payload),
   onTranslationProgress: (listener) => {
     const wrap = (evt, progress) => listener(progress)
     ipcRenderer.on('qvac:progress', wrap)

@@ -13,6 +13,7 @@
   let pendingAnnouncement = null
   let activeDrawer = ''
   let lastDrawerTrigger = null
+  let historyFilter = 'all'
 
   const els = {
     room: document.querySelector('#room'),
@@ -62,22 +63,106 @@
     proofRoom: document.querySelector('#proof-room'),
     proofPeers: document.querySelector('#proof-peers'),
     backdrop: document.querySelector('#drawer-backdrop'),
-    fixture: document.querySelector('#fixture')
+    fixture: document.querySelector('#fixture'),
+    templates: document.querySelector('#templates'),
+    inviteText: document.querySelector('#invite-text'),
+    copyInvite: document.querySelector('#copy-invite'),
+    exportProof: document.querySelector('#export-proof')
   }
+
+  const MATCHDAY_TEMPLATES = [
+    {
+      id: 'kickoff-delay',
+      label: 'Kickoff delay',
+      venue: 'Pitch 2',
+      priority: 'urgent',
+      body: 'Kickoff moves to Pitch 2 at 14:30. Meet at the north gate.'
+    },
+    {
+      id: 'gate-change',
+      label: 'Gate change',
+      venue: 'Main Gate',
+      priority: 'important',
+      body: 'Entry moves to Main Gate. Bring accreditation and matchday wristband.'
+    },
+    {
+      id: 'volunteer-brief',
+      label: 'Volunteer briefing',
+      venue: 'North Touchline',
+      priority: 'important',
+      body: 'Volunteer briefing at North Touchline in 10 minutes. Bring radios.'
+    },
+    {
+      id: 'weather-hold',
+      label: 'Weather hold',
+      venue: 'Pitch 1',
+      priority: 'urgent',
+      body: 'Weather hold on Pitch 1. Players remain in the dugout until further notice.'
+    },
+    {
+      id: 'med-station',
+      label: 'Medical station',
+      venue: 'Main Gate',
+      priority: 'routine',
+      body: 'Medical station is open beside Main Gate. Report incidents to pitch marshals first.'
+    }
+  ]
 
   const demoMode = new URLSearchParams(location.search).has('demo')
   const hasBridge = Boolean(apiBridge && typeof apiBridge.startWorker === 'function')
 
   document.querySelectorAll('.segment-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.segment-btn').forEach((other) => {
-        const active = other === btn
-        other.classList.toggle('is-active', active)
-        other.setAttribute('aria-checked', active ? 'true' : 'false')
-      })
-      els.priority.value = btn.dataset.priority
+      setPriority(btn.dataset.priority)
     })
   })
+
+  document.querySelectorAll('.venue-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setVenue(btn.dataset.venue)
+    })
+  })
+
+  document.querySelectorAll('.filter-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      historyFilter = btn.dataset.filter || 'all'
+      document.querySelectorAll('.filter-chip').forEach((other) => {
+        other.classList.toggle('is-active', other === btn)
+      })
+      render()
+    })
+  })
+
+  if (els.templates) {
+    for (const template of MATCHDAY_TEMPLATES) {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'template-chip'
+      button.textContent = template.label
+      button.addEventListener('click', () => {
+        applyTemplate(template)
+      })
+      els.templates.appendChild(button)
+    }
+  }
+
+  if (els.copyInvite) {
+    els.copyInvite.addEventListener('click', async () => {
+      const text = inviteCopyText()
+      if (!text) return
+      await navigator.clipboard.writeText(text)
+      els.copyInvite.textContent = 'Copied'
+      window.setTimeout(() => {
+        els.copyInvite.textContent = 'Copy invite'
+      }, 1200)
+    })
+  }
+
+  if (els.exportProof) {
+    els.exportProof.addEventListener('click', () => {
+      exportProofBundle()
+    })
+  }
 
   if (hasBridge) {
     apiBridge.startWorker(worker)
@@ -107,6 +192,7 @@
       } else if (message.type === 'announcement') {
         const announcement = { ...message.announcement, localSource: 'peer', ackCount: 0 }
         state = reduceState(state, { type: 'announcement/received', announcement })
+        notifyIncoming(announcement)
       } else if (message.type === 'ack') {
         state = reduceState(state, {
           type: 'announcement/ack',
@@ -339,7 +425,7 @@
     const previewStale = state.preview && state.preview.status === 'stale'
     const previewPublished = state.preview && state.preview.status === 'published'
     const bodyLength = els.body.value.length
-    const realAndFixtureHistory = [...state.fixtureHistory, ...state.history]
+    const realAndFixtureHistory = filterHistory([...state.fixtureHistory, ...state.history])
 
     document.body.classList.toggle('room-joined', joined)
     if (els.leaveRoom) els.leaveRoom.disabled = !joined && !joining
@@ -354,6 +440,12 @@
     els.roomKey.textContent = state.room
       ? `room label · ${truncateId(state.room, 22)}`
       : 'room label · —'
+    if (els.inviteText) {
+      els.inviteText.textContent = state.room
+        ? inviteCopyText()
+        : 'Join a room to generate an invite string for peers.'
+    }
+    if (els.copyInvite) els.copyInvite.disabled = !state.room
     els.connectionLabel.textContent = joined
       ? 'Connected to room'
       : joining
@@ -491,6 +583,81 @@
     return item
   }
 
+  function setPriority(priority) {
+    els.priority.value = priority
+    document.querySelectorAll('.segment-btn').forEach((other) => {
+      const active = other.dataset.priority === priority
+      other.classList.toggle('is-active', active)
+      other.setAttribute('aria-checked', active ? 'true' : 'false')
+    })
+  }
+
+  function setVenue(venue) {
+    els.venue.value = venue
+    document.querySelectorAll('.venue-btn').forEach((other) => {
+      const active = other.dataset.venue === venue
+      other.classList.toggle('is-active', active)
+      other.setAttribute('aria-checked', active ? 'true' : 'false')
+    })
+  }
+
+  function applyTemplate(template) {
+    setVenue(template.venue)
+    setPriority(template.priority)
+    els.body.value = template.body
+    originalBody = template.body
+    translatedBody = ''
+    state = reduceState(state, { type: 'composer/edited', original: template.body })
+    appendProof(`template -> ${template.id}`)
+    render()
+  }
+
+  function filterHistory(items) {
+    if (historyFilter === 'urgent') return items.filter((item) => item.priority === 'urgent')
+    if (historyFilter === 'sent') return items.filter((item) => item.localSource === 'this-device')
+    if (historyFilter === 'received') return items.filter((item) => item.localSource === 'peer')
+    return items
+  }
+
+  function inviteCopyText() {
+    if (!state.room) return ''
+    return [
+      'Touchline Relay invite',
+      `Room: ${state.room}`,
+      '1) Open Touchline Relay',
+      '2) Join this exact room key',
+      '3) Wait until peers connect',
+      'Direct P2P — no application server.'
+    ].join('\n')
+  }
+
+  function notifyIncoming(announcement) {
+    if (!apiBridge || typeof apiBridge.notify !== 'function') return
+    const title = `${announcement.venue} · ${String(announcement.priority || '').toUpperCase()}`
+    const body = String(announcement.body || '').slice(0, 140)
+    apiBridge.notify({ title, body }).catch(() => {})
+  }
+
+  function exportProofBundle() {
+    const bundle = {
+      exportedAt: new Date().toISOString(),
+      room: state.room || null,
+      peers: state.peerCount,
+      translationStatus: state.translationStatus,
+      history: state.history,
+      acks: state.acks,
+      proofLog: els.proof ? els.proof.textContent : ''
+    }
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `touchline-proof-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    appendProof('export -> proof bundle downloaded')
+  }
+
   function seedDemoState() {
     const now = Date.now()
     const a = {
@@ -528,13 +695,8 @@
     state = reduceState(state, { type: 'announcement/received', announcement: b })
     state = { ...state, translationStatus: 'ready', peerCount: 2, p2pStatus: 'joined' }
     els.body.value = a.body
-    els.venue.value = 'Pitch 2'
-    els.priority.value = 'urgent'
-    document.querySelectorAll('.segment-btn').forEach((btn) => {
-      const active = btn.dataset.priority === 'urgent'
-      btn.classList.toggle('is-active', active)
-      btn.setAttribute('aria-checked', active ? 'true' : 'false')
-    })
+    setVenue('Pitch 2')
+    setPriority('urgent')
     els.translationMeta.textContent = 'BERGAMOT_EN_ES · demo preview · No cloud API'
     els.publishNote.textContent =
       'Demo preview: populated history + joined channel (not live network).'
