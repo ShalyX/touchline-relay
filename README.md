@@ -10,12 +10,12 @@ Tournament updates often get lost across WhatsApp, email, and team apps. When a 
 
 ## Sponsor stack (load-bearing)
 
-| Layer | Technology | Role |
-| --- | --- | --- |
-| Local AI | **QVAC SDK** + `BERGAMOT_EN_ES` | English → Spanish translation on the organizer’s machine |
-| Desktop shell | **Electron** (Forge package) | UI + main-process QVAC lifecycle |
-| P2P runtime | **PearRuntime** / Bare worker | Owns Hyperswarm membership and relay |
-| Networking | **Hyperswarm** | Direct peer delivery of structured announcements |
+| Layer         | Technology                      | Role                                                     |
+| ------------- | ------------------------------- | -------------------------------------------------------- |
+| Local AI      | **QVAC SDK** + `BERGAMOT_EN_ES` | English → Spanish translation on the organizer’s machine |
+| Desktop shell | **Electron** (Forge package)    | UI + main-process QVAC lifecycle                         |
+| P2P runtime   | **PearRuntime** / Bare worker   | Owns Hyperswarm membership and relay                     |
+| Networking    | **Hyperswarm**                  | Direct peer delivery of structured announcements         |
 
 There is no cloud translation API, application server, account system, wallet, or general chat feed.
 
@@ -92,6 +92,45 @@ Optional Chromium remote debugging (used by automated QA):
 ```bash
 npm start -- --storage /tmp/touchline-a --remote-debugging-port 9222
 ```
+
+## How users get the app
+
+This is a **desktop app**, not a website. Users install/run it on their machine (organizer laptop, ops desk, second peer device).
+
+### Option A — from source (MVP / hackathon)
+
+```bash
+git clone https://github.com/ShalyX/touchline-relay.git
+cd touchline-relay
+npm install
+npm start -- --storage ./data-organizer
+```
+
+Another peer (second machine or second terminal):
+
+```bash
+npm start -- --storage ./data-peer
+```
+
+Join the **same room key** on both. Translate on the organizer. The peer receives the bilingual alert.
+
+### Option B — packaged binary
+
+```bash
+npm run package
+# Linux:
+# out/Touchline Relay-linux-x64/Touchline Relay
+```
+
+Zip that folder (or build installers later) and hand it to users. No account, no cloud API key, no app server.
+
+### What “local” does _not_ mean
+
+- Not “terminal only forever” — Electron is a normal desktop UI.
+- Not “offline guaranteed” — peer discovery still needs network reachability.
+- Not multi-tenant SaaS — there is no hosted production URL in this MVP.
+
+Static design preview (populated mock, not live network): open `renderer/index.html?demo=1` in a browser.
 
 ## Verify
 

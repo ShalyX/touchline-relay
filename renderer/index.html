@@ -430,6 +430,70 @@
         margin-bottom: 14px;
       }
 
+      .segment {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2px;
+        padding: 2px;
+        min-height: 36px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface-2);
+      }
+      .segment-btn {
+        min-height: 30px;
+        padding: 0 6px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: -0.01em;
+      }
+      .segment-btn:hover:not(:disabled) {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .segment-btn.is-active {
+        color: var(--ink);
+        background: var(--surface-3);
+        box-shadow: inset 0 0 0 1px var(--line-strong);
+      }
+      .segment-btn[data-priority='urgent'].is-active {
+        color: #ffd8cb;
+        background: rgba(255, 113, 74, 0.16);
+        box-shadow: inset 0 0 0 1px rgba(255, 113, 74, 0.35);
+      }
+      .priority-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .priority-chip::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--inactive);
+      }
+      .priority-chip.is-important::before {
+        background: var(--warning);
+      }
+      .priority-chip.is-urgent::before {
+        background: var(--relay);
+      }
+      .priority-chip.is-routine::before {
+        background: var(--ready);
+      }
+      .history-item.is-expanded .history-copy {
+        display: block;
+        -webkit-line-clamp: unset;
+      }
+
       .message-field {
         position: relative;
         display: block;
@@ -1024,14 +1088,39 @@
               <option>Main Gate</option>
             </select>
           </label>
-          <label class="field" for="priority">
-            <span class="field-label">Priority</span>
-            <select id="priority">
-              <option value="routine">Routine</option>
-              <option value="important" selected>Important</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </label>
+          <div class="field">
+            <span class="field-label" id="priority-label">Priority</span>
+            <div class="segment" role="radiogroup" aria-labelledby="priority-label">
+              <button
+                type="button"
+                class="segment-btn"
+                data-priority="routine"
+                role="radio"
+                aria-checked="false"
+              >
+                Routine
+              </button>
+              <button
+                type="button"
+                class="segment-btn is-active"
+                data-priority="important"
+                role="radio"
+                aria-checked="true"
+              >
+                Important
+              </button>
+              <button
+                type="button"
+                class="segment-btn"
+                data-priority="urgent"
+                role="radio"
+                aria-checked="false"
+              >
+                Urgent
+              </button>
+            </div>
+            <input type="hidden" id="priority" value="important" />
+          </div>
           <label class="field" for="language">
             <span class="field-label">Target</span>
             <select id="language">

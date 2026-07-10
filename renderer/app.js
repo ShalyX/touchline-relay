@@ -64,56 +64,78 @@
     fixture: document.querySelector('#fixture')
   }
 
-  apiBridge.startWorker(worker)
+  const demoMode = new URLSearchParams(location.search).has('demo')
+  const hasBridge = Boolean(apiBridge && typeof apiBridge.startWorker === 'function')
 
-  apiBridge.onWorkerIPC(worker, (data) => {
-    const message = JSON.parse(decoder.decode(data))
-    const identity =
-      message.type === 'joined' || message.type === 'status'
-        ? ` · topic ${truncateId(message.topic || 'pending', 16)} · peer ${truncateId(message.peerId || 'pending', 16)}`
-        : ''
-    appendProof(`worker -> ${message.type}${identity}`)
-
-    if (message.type === 'joined') {
-      state = reduceState(state, { type: 'room/joined', room: message.room, peers: message.peers })
-    } else if (message.type === 'status' || message.type === 'peer') {
-      state = reduceState(state, {
-        type: 'room/status',
-        status: message.status,
-        peers: message.peers
+  document.querySelectorAll('.segment-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.segment-btn').forEach((other) => {
+        const active = other === btn
+        other.classList.toggle('is-active', active)
+        other.setAttribute('aria-checked', active ? 'true' : 'false')
       })
-    } else if (message.type === 'announcement') {
-      const announcement = { ...message.announcement, localSource: 'peer' }
-      state = reduceState(state, { type: 'announcement/received', announcement })
-    } else if (message.type === 'published') {
-      if (pendingAnnouncement && pendingAnnouncement.id === message.id) {
+      els.priority.value = btn.dataset.priority
+    })
+  })
+
+  if (hasBridge) {
+    apiBridge.startWorker(worker)
+
+    apiBridge.onWorkerIPC(worker, (data) => {
+      const message = JSON.parse(decoder.decode(data))
+      const identity =
+        message.type === 'joined' || message.type === 'status'
+          ? ` · topic ${truncateId(message.topic || 'pending', 16)} · peer ${truncateId(message.peerId || 'pending', 16)}`
+          : ''
+      appendProof(`worker -> ${message.type}${identity}`)
+
+      if (message.type === 'joined') {
         state = reduceState(state, {
-          type: 'announcement/received',
-          announcement: { ...pendingAnnouncement, localSource: 'this-device' }
+          type: 'room/joined',
+          room: message.room,
+          peers: message.peers
         })
+      } else if (message.type === 'status' || message.type === 'peer') {
+        state = reduceState(state, {
+          type: 'room/status',
+          status: message.status,
+          peers: message.peers
+        })
+      } else if (message.type === 'announcement') {
+        const announcement = { ...message.announcement, localSource: 'peer' }
+        state = reduceState(state, { type: 'announcement/received', announcement })
+      } else if (message.type === 'published') {
+        if (pendingAnnouncement && pendingAnnouncement.id === message.id) {
+          state = reduceState(state, {
+            type: 'announcement/received',
+            announcement: { ...pendingAnnouncement, localSource: 'this-device' }
+          })
+        }
+        state = reduceState(state, { type: 'composer/published', id: message.id })
+        pendingAnnouncement = null
+        publishing = false
+        els.publishNote.textContent = `Accepted by the local relay at ${new Date().toLocaleTimeString()}. This does not confirm receipt by every peer.`
+      } else if (message.type === 'error') {
+        publishing = false
+        state = reduceState(state, { type: 'error', message: message.message })
       }
-      state = reduceState(state, { type: 'composer/published', id: message.id })
-      pendingAnnouncement = null
-      publishing = false
-      els.publishNote.textContent = `Accepted by the local relay at ${new Date().toLocaleTimeString()}. This does not confirm receipt by every peer.`
-    } else if (message.type === 'error') {
-      publishing = false
-      state = reduceState(state, { type: 'error', message: message.message })
-    }
 
-    render()
-  })
+      render()
+    })
 
-  apiBridge.onWorkerStderr(worker, (data) =>
-    appendProof(`worker stderr -> ${decoder.decode(data).trim()}`)
-  )
-  apiBridge.onTranslationProgress((event) => {
-    state = reduceState(state, { type: 'composer/translating' })
-    const loaded = event.progress && event.progress.loaded
-    const total = event.progress && event.progress.total
-    appendProof(`qvac progress -> ${loaded || '?'} / ${total || '?'}`)
-    render()
-  })
+    apiBridge.onWorkerStderr(worker, (data) =>
+      appendProof(`worker stderr -> ${decoder.decode(data).trim()}`)
+    )
+    apiBridge.onTranslationProgress((event) => {
+      state = reduceState(state, { type: 'composer/translating' })
+      const loaded = event.progress && event.progress.loaded
+      const total = event.progress && event.progress.total
+      appendProof(`qvac progress -> ${loaded || '?'} / ${total || '?'}`)
+      render()
+    })
+  }
+
+  if (demoMode) seedDemoState()
 
   els.join.addEventListener('click', async () => {
     const requestedRoom = els.room.value.trim()
@@ -146,6 +168,7 @@
 
     const started = performance.now()
     try {
+      if (!hasBridge) throw new Error('Bridge unavailable in demo preview')
       const result = await apiBridge.translateToSpanish(originalBody)
       translatedBody = result.text
       state = reduceState(state, {
@@ -212,7 +235,7 @@
     await navigator.clipboard.writeText(state.room)
     els.copyRoom.textContent = 'Copied'
     window.setTimeout(() => {
-      els.copyRoom.textContent = 'Copy room key'
+      els.copyRoom.textContent = 'Copy key'
     }, 1200)
   })
 
@@ -392,23 +415,31 @@
 
   function renderHistoryItem(announcement) {
     const sample = state.fixtureHistory.some((item) => item.id === announcement.id)
+    const expanded = selectedHistoryId === announcement.id
+    const priority = String(announcement.priority || 'routine')
     const item = document.createElement('li')
-    item.className = `history-item${sample ? ' sample' : ''}${selectedHistoryId === announcement.id ? ' selected' : ''}`
+    item.className = `history-item${sample ? ' sample' : ''}${expanded ? ' selected is-expanded' : ''}`
     item.tabIndex = 0
     item.setAttribute(
       'aria-label',
       `${sample ? 'Local visual sample' : 'Announcement'} at ${announcement.venue}`
     )
     const created = announcement.createdAt ? new Date(announcement.createdAt) : new Date()
+    const footer = sample
+      ? 'Local sample · no relay activity'
+      : announcement.localSource === 'this-device'
+        ? 'Sent by this device · local relay accepted'
+        : `Received · ${escapeHtml(truncateId(announcement.id, 10))}`
+    const es = (announcement.translations && announcement.translations.es) || ''
     item.innerHTML = `
     <div class="history-meta">
       <strong>${escapeHtml(announcement.venue)}</strong>
-      <span>${escapeHtml(announcement.priority)}</span>
+      <span class="priority-chip is-${escapeHtml(priority)}">${escapeHtml(priority)}</span>
       <time datetime="${escapeHtml(created.toISOString())}" title="${escapeHtml(created.toLocaleString())}">${escapeHtml(created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</time>
     </div>
     <p class="history-copy" lang="en">${escapeHtml(announcement.body)}</p>
-    <p class="history-copy translated" lang="es">${escapeHtml(announcement.translations.es)}</p>
-    <div class="history-footer">${sample ? 'Local visual sample · no relay activity' : announcement.localSource === 'this-device' ? 'Sent by this device · accepted by local relay' : `Received · peer ${escapeHtml(truncateId(announcement.id, 8))}`}</div>
+    <p class="history-copy translated" lang="es">${escapeHtml(es)}</p>
+    <div class="history-footer">${footer}</div>
   `
     const select = () => {
       selectedHistoryId = selectedHistoryId === announcement.id ? '' : announcement.id
@@ -424,7 +455,58 @@
     return item
   }
 
+  function seedDemoState() {
+    const now = Date.now()
+    const a = {
+      id: 'demo-sent-1',
+      type: 'touchline.announcement.v1',
+      room: 'saturday-final',
+      venue: 'Pitch 2',
+      priority: 'urgent',
+      body: 'Kickoff moves to Pitch 2 at 14:30. Meet at the north gate.',
+      translations: {
+        es: 'Kickoff se traslada a Pitch 2 a las 14:30. Reúnase en la puerta norte.'
+      },
+      createdAt: new Date(now - 8 * 60000).toISOString(),
+      localSource: 'this-device'
+    }
+    const b = {
+      id: 'demo-recv-1',
+      type: 'touchline.announcement.v1',
+      room: 'saturday-final',
+      venue: 'Main Gate',
+      priority: 'important',
+      body: 'Volunteer briefing at Main Gate in 10 minutes.',
+      translations: { es: 'Reunión de voluntarios en la puerta principal en 10 minutos.' },
+      createdAt: new Date(now - 3 * 60000).toISOString(),
+      localSource: 'peer'
+    }
+    state = reduceState(state, { type: 'room/joined', room: 'saturday-final', peers: 2 })
+    state = reduceState(state, {
+      type: 'composer/translated',
+      original: a.body,
+      translated: a.translations.es
+    })
+    state = reduceState(state, { type: 'composer/published', id: a.id })
+    state = reduceState(state, { type: 'announcement/received', announcement: a })
+    state = reduceState(state, { type: 'announcement/received', announcement: b })
+    state = { ...state, translationStatus: 'ready', peerCount: 2, p2pStatus: 'joined' }
+    els.body.value = a.body
+    els.venue.value = 'Pitch 2'
+    els.priority.value = 'urgent'
+    document.querySelectorAll('.segment-btn').forEach((btn) => {
+      const active = btn.dataset.priority === 'urgent'
+      btn.classList.toggle('is-active', active)
+      btn.setAttribute('aria-checked', active ? 'true' : 'false')
+    })
+    els.translationMeta.textContent = 'BERGAMOT_EN_ES · demo preview · No cloud API'
+    els.publishNote.textContent =
+      'Demo preview: populated history + joined channel (not live network).'
+    selectedHistoryId = a.id
+  }
+
   async function sendWorker(command) {
+    if (!hasBridge) throw new Error('Bridge unavailable in demo preview')
     await apiBridge.writeWorkerIPC(worker, encoder.encode(JSON.stringify(command)))
   }
 
