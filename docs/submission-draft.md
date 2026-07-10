@@ -163,5 +163,5 @@ Touchline Relay avoids the crowded wallet/escrow/prediction categories and uses 
 - Public repository: https://github.com/ShalyX/touchline-relay
 - Demo video: `[ADD FINAL UNLISTED VIDEO URL]`
 - Linux package path (local): `out/Touchline Relay-linux-x64/`
-- Commit demonstrated: `[FILL AFTER PUSH]`
+- Commit demonstrated: `76c1aa670671b5c5f66d905b388c367e3eac882d`
 - Test evidence: `npm test` 16/16; `npm run lint` 0; package + two-peer CDP QA on 2026-07-10
