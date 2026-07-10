@@ -1,1 +1,7 @@
-out
+.hermes/
+docs/
+LICENSE
+build/*.xml
+flatpak/*.xml
+node_modules/
+out/

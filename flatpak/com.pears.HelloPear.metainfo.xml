@@ -4,10 +4,10 @@
 -->
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.pears.HelloPear</id>
+  <id>com.touchlinerelay.App</id>
 
-  <name>HelloPear</name>
-  <summary>Integrating Pear into a hello world electron desktop app</summary>
+  <name>Touchline Relay</name>
+  <summary>Local tournament announcements with QVAC translation and Hyperswarm relay</summary>
 
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
@@ -18,9 +18,9 @@
 
   <content_rating type="oars-1.1"/>
 
-  <url type="homepage">https://github.com/holepunchto/hello-pear-electron</url>
-  <url type="help">https://github.com/holepunchto/hello-pear-electron/issues/new/choose</url>
-  <url type="bugtracker">https://github.com/holepunchto/hello-pear-electron/issues</url>
+  <url type="homepage">https://github.com/touchline-relay/touchline-relay</url>
+  <url type="help">https://github.com/touchline-relay/touchline-relay/issues/new/choose</url>
+  <url type="bugtracker">https://github.com/touchline-relay/touchline-relay/issues</url>
 
   <releases>
     <release date="2026-06-29" version="1.0.0"/>
@@ -36,19 +36,18 @@
   </supports>
 
   <description>
-    <p>End-to-end boilerplate for embedding pear-runtime into Electron apps and deploying peer-to-peer application updates.</p>
+    <p>Touchline Relay translates English matchday announcements to Spanish locally with QVAC and sends them directly to joined peers over Hyperswarm.</p>
     <ul>
-      <li>Peer-to-Peer Over-the-Air updates with update-restart</li>
-      <li>Embedded bare runtime workers</li>
-      <li>Application storage management</li>
-      <li>Staged deployment pipeline with multisig production releases</li>
+      <li>Local QVAC Bergamot EN to ES translation</li>
+      <li>Embedded PearRuntime Bare worker for Hyperswarm relay</li>
+      <li>Structured announcement validation and duplicate rejection</li>
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.pears.HelloPear.desktop</launchable>
+  <launchable type="desktop-id">com.touchlinerelay.App.desktop</launchable>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/holepunchto/hello-pear-electron/refs/heads/main/assets/flatpak-screenshot.png</image>
+      <image>https://raw.githubusercontent.com/touchline-relay/touchline-relay/main/assets/flatpak-screenshot.png</image>
     </screenshot>
   </screenshots>
 </component>

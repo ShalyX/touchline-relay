@@ -1,48 +1,1230 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Hello Pear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Touchline Relay</title>
     <style>
-      body {
+      :root {
+        color-scheme: dark;
+        --canvas: #0b0d0e;
+        --surface-1: #111416;
+        --surface-2: #171a1d;
+        --surface-3: #202428;
+        --ink: #f4f2ed;
+        --ink-secondary: #c1c4c2;
+        --muted: #858b89;
+        --faint: #5e6462;
+        --line: rgba(244, 242, 237, 0.1);
+        --line-strong: rgba(244, 242, 237, 0.18);
+        --relay: #ff714a;
+        --relay-hover: #ff8565;
+        --relay-pressed: #e65f3c;
+        --relay-ink: #160b07;
+        --ready: #63b88a;
+        --warning: #d8a84e;
+        --danger: #e16b62;
+        --inactive: #717775;
         font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
+          Geist,
+          Inter,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
         margin: 0;
-        background: linear-gradient(135deg, #21c437 0%, #0e4f15 100%);
-        color: white;
+        overflow: hidden;
+        background: var(--canvas);
+        color: var(--ink);
       }
-      h1 {
-        font-size: 48px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
       }
-      #update-btn {
-        display: none;
-        margin-top: 20px;
-        padding: 12px 24px;
-        font-size: 18px;
-        border: 2px solid white;
-        border-radius: 8px;
-        background: green;
-        color: white;
+
+      button,
+      input,
+      select,
+      textarea,
+      [tabindex] {
+        outline: none;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--relay);
+        outline-offset: 2px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: transparent;
+        color: var(--ink);
         cursor: pointer;
       }
-      #update-btn:hover {
-        background: greenyellow;
+
+      button:hover:not(:disabled) {
+        border-color: rgba(244, 242, 237, 0.34);
+        background: var(--surface-2);
       }
-      .container {
-        text-align: center;
+
+      button:active:not(:disabled) {
+        transform: translateY(1px);
+        background: var(--surface-3);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        color: var(--faint);
+        border-color: var(--line);
+      }
+
+      button.primary {
+        min-height: 42px;
+        padding: 0 18px;
+        border-color: var(--relay);
+        background: var(--relay);
+        color: var(--relay-ink);
+        font-weight: 650;
+      }
+
+      button.primary:hover:not(:disabled) {
+        border-color: var(--relay-hover);
+        background: var(--relay-hover);
+      }
+
+      button.primary:active:not(:disabled) {
+        background: var(--relay-pressed);
+      }
+
+      button.primary:disabled {
+        border-color: var(--line-strong);
+        background: var(--surface-3);
+        color: var(--faint);
+      }
+
+      button.quiet {
+        min-height: 36px;
+        padding: 0 8px;
+        border-color: transparent;
+        color: var(--ink-secondary);
+      }
+
+      .mono {
+        font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: minmax(190px, auto) 1fr auto;
+        align-items: center;
+        height: 56px;
+        padding: 0 16px 0 20px;
+        border-bottom: 1px solid var(--line);
+        background: var(--canvas);
+      }
+
+      .brand,
+      .brand-copy,
+      .top-actions,
+      .room-context,
+      .health-indicator {
+        display: flex;
+        align-items: center;
+      }
+
+      .brand {
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .brand-copy {
+        gap: 18px;
+        min-width: 0;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        color: var(--ink);
+      }
+
+      .wordmark {
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+
+      .room-context {
+        gap: 7px;
+        min-width: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .room-context svg {
+        flex: 0 0 auto;
+      }
+
+      #top-room {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .top-actions {
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .health-indicator {
+        gap: 8px;
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-secondary);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: var(--inactive);
+      }
+
+      .status-dot.ready {
+        background: var(--ready);
+      }
+
+      .status-dot.warning {
+        background: var(--warning);
+      }
+
+      .top-button {
+        min-height: 36px;
+        padding: 0 10px;
+        border-color: transparent;
+        color: var(--ink-secondary);
+        font-size: 12px;
+      }
+
+      #history-toggle,
+      #room-toggle {
+        display: none;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr) 320px;
+        height: calc(100% - 56px);
+      }
+
+      .region {
+        min-width: 0;
+        overflow-y: auto;
+        scrollbar-color: var(--surface-3) transparent;
+      }
+
+      .room-rail,
+      .composer {
+        border-right: 1px solid var(--line);
+      }
+
+      .room-rail {
+        padding: 24px 20px;
+        background: var(--canvas);
+      }
+
+      .composer {
+        padding: 24px;
+        background: var(--surface-1);
+      }
+
+      .history-region {
+        padding: 24px 0;
+        background: var(--canvas);
+      }
+
+      .eyebrow,
+      .field-label,
+      .preview-label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 6px;
+        font-size: 28px;
+        font-weight: 620;
+        line-height: 32px;
+        letter-spacing: -0.035em;
+      }
+
+      h2 {
+        margin: 6px 0 0;
+        font-size: 18px;
+        font-weight: 620;
+        line-height: 24px;
+        letter-spacing: -0.02em;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .draft-status {
+        padding-top: 18px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .room-form {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+
+      input,
+      select {
+        height: 38px;
+        padding: 0 11px;
+      }
+
+      select {
+        color-scheme: dark;
+      }
+
+      .room-note,
+      .support-copy,
+      .privacy-note {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .room-note {
+        margin: 16px 0 0;
+      }
+
+      .room-facts {
+        display: none;
+        margin-top: 24px;
+      }
+
+      body.room-joined .room-form {
+        display: none;
+      }
+
+      body.room-joined .room-facts {
+        display: block;
+      }
+
+      .room-name {
+        margin: 0 0 4px;
+        overflow-wrap: anywhere;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .room-key {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .fact-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .fact-row strong {
+        color: var(--ink-secondary);
+        font-weight: 550;
+        text-align: right;
+      }
+
+      .room-actions {
+        display: flex;
+        gap: 8px;
+        margin: 10px -8px 16px;
+      }
+
+      .privacy-facts {
+        margin-top: 16px;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .structured-controls {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .message-field {
+        position: relative;
+        display: block;
+      }
+
+      textarea {
+        min-height: 156px;
+        padding: 16px 16px 34px;
+        resize: vertical;
+        border-color: transparent;
+        line-height: 26px;
+        font-size: 17px;
+      }
+
+      .character-count {
+        position: absolute;
+        right: 12px;
+        bottom: 10px;
+        color: var(--faint);
+        font-size: 11px;
+      }
+
+      .composer-action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 58px;
+        padding: 8px 0;
+      }
+
+      .action-feedback {
+        min-width: 0;
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .action-feedback.error {
+        color: var(--danger);
+      }
+
+      .translate-button {
+        min-width: 154px;
+      }
+
+      .preview-section {
+        padding-top: 20px;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .preview-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .sample-flag,
+      .stale-flag {
+        color: var(--warning);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .stale-flag {
+        display: none;
+      }
+
+      .preview-section.stale .stale-flag {
+        display: inline;
+      }
+
+      .preview-section.stale .sample-flag {
+        display: none;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .preview-pane {
+        min-width: 0;
+        padding: 16px 20px 18px 0;
+      }
+
+      .preview-pane + .preview-pane {
+        padding-left: 20px;
+        border-left: 1px solid var(--line);
+      }
+
+      .preview-body {
+        max-width: 68ch;
+        min-height: 88px;
+        margin: 10px 0 14px;
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 450;
+        line-height: 28px;
+        white-space: pre-wrap;
+        user-select: text;
+      }
+
+      .preview-meta {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 16px;
+      }
+
+      .preview-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+
+      .publish-note {
+        margin-right: auto;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 16px;
+      }
+
+      .history-head {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .history-count {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .history-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      .history-item {
+        position: relative;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+      }
+
+      .history-item:hover,
+      .history-item:focus-within {
+        background: var(--surface-2);
+      }
+
+      .history-item.selected {
+        padding-left: 18px;
+        border-left: 2px solid var(--relay);
+        background: var(--surface-2);
+      }
+
+      .history-item.sample::after {
+        content: 'LOCAL SAMPLE';
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        color: var(--warning);
+        font-size: 9px;
+        letter-spacing: 0.08em;
+      }
+
+      .history-meta,
+      .history-footer {
+        display: flex;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .history-meta {
+        padding-right: 74px;
+      }
+
+      .history-meta strong {
+        overflow: hidden;
+        color: var(--ink-secondary);
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .history-copy {
+        display: -webkit-box;
+        overflow: hidden;
+        margin: 10px 0 0;
+        color: var(--ink);
+        font-size: 13px;
+        line-height: 19px;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .history-copy.translated {
+        margin-top: 5px;
+        color: var(--ink-secondary);
+      }
+
+      .history-footer {
+        margin-top: 12px;
+        text-transform: none;
+      }
+
+      .empty-history {
+        padding: 42px 28px;
+        color: var(--muted);
+      }
+
+      .empty-history .mark {
+        width: 20px;
+        height: 20px;
+        margin-bottom: 18px;
+        color: var(--muted);
+      }
+
+      .empty-history strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink-secondary);
+        font-size: 13px;
+      }
+
+      .empty-history p {
+        max-width: 220px;
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .drawer-backdrop {
+        position: fixed;
+        z-index: 29;
+        inset: 56px 0 0;
+        display: none;
+        background: rgba(0, 0, 0, 0.46);
+      }
+
+      .drawer-backdrop.open {
+        display: block;
+      }
+
+      .proof-drawer {
+        position: fixed;
+        z-index: 30;
+        top: 56px;
+        right: 0;
+        bottom: 0;
+        width: min(420px, 100vw);
+        padding: 24px;
+        overflow-y: auto;
+        border-left: 1px solid var(--line-strong);
+        background: var(--surface-1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        transform: translateX(100%);
+        visibility: hidden;
+      }
+
+      .proof-drawer.open {
+        transform: translateX(0);
+        visibility: visible;
+      }
+
+      .drawer-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .proof-section {
+        padding: 16px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .proof-row {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 12px;
+        padding: 5px 0;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .proof-row code {
+        overflow-wrap: anywhere;
+        color: var(--ink-secondary);
+      }
+
+      #proof-log {
+        max-height: 180px;
+        overflow: auto;
+        margin: 8px 0 0;
+        color: var(--muted);
+        white-space: pre-wrap;
+        font-size: 10px;
+        line-height: 16px;
+      }
+
+      @media (min-width: 1440px) {
+        .workspace {
+          grid-template-columns: 240px minmax(0, 1fr) 360px;
+        }
+      }
+
+      @media (max-width: 1179px) {
+        .workspace {
+          grid-template-columns: 220px minmax(0, 1fr) 300px;
+        }
+
+        body.room-joined .workspace {
+          grid-template-columns: 0 minmax(0, 1fr) 300px;
+        }
+
+        body.room-joined .room-rail {
+          padding: 0;
+          border: 0;
+          overflow: visible;
+        }
+
+        body.room-joined .room-rail > * {
+          display: none;
+        }
+
+        body.room-joined #room-toggle {
+          display: inline-flex;
+        }
+
+        body.room-joined .room-rail.open {
+          position: fixed;
+          z-index: 31;
+          top: 56px;
+          bottom: 0;
+          left: 0;
+          display: block;
+          width: 280px;
+          padding: 20px;
+          border-right: 1px solid var(--line-strong);
+          background: var(--canvas);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        body.room-joined .room-rail.open > * {
+          display: block;
+        }
+
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-pane + .preview-pane {
+          padding-left: 0;
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+      }
+
+      @media (max-width: 899px) {
+        .topbar {
+          grid-template-columns: minmax(140px, 1fr) auto;
+          padding-left: 14px;
+        }
+
+        .brand-copy {
+          gap: 12px;
+        }
+
+        .room-context,
+        .health-indicator span:not(.status-dot) {
+          display: none;
+        }
+
+        .health-indicator {
+          width: 28px;
+          justify-content: center;
+          padding: 0;
+        }
+
+        #history-toggle,
+        #room-toggle {
+          display: inline-flex;
+        }
+
+        .workspace,
+        body.room-joined .workspace {
+          display: block;
+        }
+
+        .composer {
+          height: 100%;
+          border-right: 0;
+        }
+
+        .room-rail {
+          position: fixed;
+          z-index: 31;
+          top: 56px;
+          bottom: 0;
+          left: 0;
+          display: none;
+          width: 280px;
+          padding: 20px;
+          border-right: 1px solid var(--line-strong);
+          background: var(--canvas);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .room-rail.open,
+        body:not(.room-joined):not(.room-sheet-dismissed) .room-rail,
+        body.room-joined .room-rail.open {
+          display: block;
+        }
+
+        body.room-joined .room-rail.open > * {
+          display: block;
+        }
+
+        .history-region {
+          position: fixed;
+          z-index: 31;
+          top: 56px;
+          right: 0;
+          bottom: 0;
+          display: none;
+          width: min(340px, 92vw);
+          border-left: 1px solid var(--line-strong);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .history-region.open {
+          display: block;
+        }
+
+        .structured-controls {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .structured-controls .field:last-child {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 780px) {
+        .wordmark {
+          font-size: 13px;
+        }
+
+        .top-actions {
+          gap: 2px;
+        }
+
+        .composer {
+          padding: 18px 16px;
+        }
+
+        .section-heading {
+          margin-bottom: 18px;
+        }
+
+        h1 {
+          font-size: 24px;
+          line-height: 29px;
+        }
+
+        .preview-body {
+          min-height: 0;
+        }
+      }
+
+      @media (max-height: 699px) {
+        .composer,
+        .room-rail {
+          padding-top: 16px;
+          padding-bottom: 16px;
+        }
+
+        .section-heading {
+          margin-bottom: 16px;
+        }
+
+        textarea {
+          min-height: 112px;
+        }
+
+        .preview-pane {
+          padding-top: 12px;
+          padding-bottom: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        button,
+        .proof-drawer {
+          transition:
+            background-color 120ms ease-out,
+            border-color 120ms ease-out,
+            color 120ms ease-out,
+            transform 200ms ease-out;
+        }
+
+        .preview-section.ready {
+          animation: preview-in 180ms ease-out;
+        }
+      }
+
+      @keyframes preview-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+
+        button:active:not(:disabled) {
+          transform: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1 id="v">v</h1>
-      <button id="update-btn">Apply update</button>
+    <header class="topbar">
+      <div class="brand-copy">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M7 3V20H13"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="7" cy="11" r="2.25" fill="currentColor" />
+            <path
+              d="M10.5 8.25H16.5M10.5 13.75H20"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="wordmark">Touchline Relay</span>
+        </div>
+        <div class="room-context" aria-live="polite">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="5.5" cy="7" r="2.5" stroke="currentColor" stroke-width="1.4" />
+            <path
+              d="M7.5 8.5L12.5 13.5M10 11L11.5 9.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span id="top-room">No room joined</span>
+        </div>
+      </div>
+      <div></div>
+      <nav class="top-actions" aria-label="System health and drawers">
+        <button id="room-toggle" class="top-button" type="button">Room</button>
+        <button
+          id="translation-health"
+          class="health-indicator"
+          type="button"
+          title="Local translation · Not loaded"
+        >
+          <span id="translation-dot" class="status-dot"></span>
+          <span>Local translation · <strong id="qvac-status">Not loaded</strong></span>
+        </button>
+        <button
+          id="relay-health"
+          class="health-indicator"
+          type="button"
+          title="P2P relay · Not joined"
+        >
+          <span id="relay-dot" class="status-dot"></span>
+          <span>P2P relay · <strong id="p2p-status">Not joined</strong></span>
+        </button>
+        <button id="history-toggle" class="top-button" type="button">
+          History (<span id="history-count-top">0</span>)
+        </button>
+        <button id="proof-toggle" class="top-button" type="button">Proof</button>
+      </nav>
+    </header>
+
+    <div class="workspace">
+      <aside id="room-rail" class="region room-rail" aria-label="Room controls">
+        <div class="eyebrow">Room</div>
+        <h2>Join the matchday channel</h2>
+        <div class="room-form">
+          <label class="field" for="room">
+            <span class="field-label">Room key or name</span>
+            <input id="room" value="saturday-final" autocomplete="off" />
+          </label>
+          <button id="join" type="button">Join room</button>
+          <p class="room-note">
+            Peers connect directly over the network. Discovery requires network reachability.
+          </p>
+        </div>
+        <div class="room-facts">
+          <p id="joined-room-name" class="room-name">—</p>
+          <div id="room-key" class="room-key mono">room label · —</div>
+          <div class="fact-row">
+            <span>Connection</span><strong id="connection-label">Not joined</strong>
+          </div>
+          <div class="fact-row"><span>Peers</span><strong id="peer-count">0 · waiting</strong></div>
+          <div class="room-actions">
+            <button id="copy-room" class="quiet" type="button">Copy room key</button>
+            <button
+              id="leave-room"
+              class="quiet"
+              type="button"
+              disabled
+              title="Restart the app to leave this MVP room"
+            >
+              Leave
+            </button>
+          </div>
+          <div class="privacy-facts">
+            <div class="fact-row"><span>Application server</span><strong>None</strong></div>
+            <div class="fact-row"><span>Message history</span><strong>This device</strong></div>
+          </div>
+          <p class="privacy-note">
+            Direct relay acceptance is not universal delivery. Reachable peers receive announcements
+            over P2P sockets.
+          </p>
+        </div>
+      </aside>
+
+      <main class="region composer">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">New alert</div>
+            <h1>Compose matchday update</h1>
+          </div>
+          <span id="draft-status" class="draft-status">Not translated</span>
+        </div>
+
+        <div class="structured-controls">
+          <label class="field" for="venue">
+            <span class="field-label">Venue</span>
+            <select id="venue">
+              <option>North Touchline</option>
+              <option>Pitch 1</option>
+              <option selected>Pitch 2</option>
+              <option>Main Gate</option>
+            </select>
+          </label>
+          <label class="field" for="priority">
+            <span class="field-label">Priority</span>
+            <select id="priority">
+              <option value="routine">Routine</option>
+              <option value="important" selected>Important</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </label>
+          <label class="field" for="language">
+            <span class="field-label">Translate to</span>
+            <select id="language">
+              <option value="es">Spanish · ES</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field" for="body">
+          <span class="field-label">Announcement</span>
+          <span class="message-field">
+            <textarea id="body" maxlength="420" placeholder="Write a short operational update…">
+Kickoff moves to Pitch 2 at 14:30.</textarea
+            >
+            <span id="character-count" class="character-count mono">39 / 420</span>
+          </span>
+        </label>
+
+        <div class="composer-action-row">
+          <p id="error" class="action-feedback" role="status" aria-live="polite">
+            Join a room to translate and publish.
+          </p>
+          <button id="translate" class="translate-button" type="button">Translate locally</button>
+        </div>
+
+        <section id="preview" class="preview-section" aria-live="polite">
+          <div class="preview-head">
+            <span class="eyebrow">Preview</span>
+            <span id="sample-flag" class="sample-flag"
+              >Local visual sample · no model or network activity</span
+            >
+            <span class="stale-flag">Out of date · retranslate to publish</span>
+          </div>
+          <div class="preview-grid">
+            <article class="preview-pane">
+              <div class="preview-label">English · Original</div>
+              <p id="original-preview" class="preview-body" lang="en">
+                Translate an announcement to preview the original here.
+              </p>
+              <div class="preview-meta mono">Structured venue tags stay with the alert</div>
+            </article>
+            <article class="preview-pane">
+              <div class="preview-label">Spanish · Local translation</div>
+              <p id="translated-preview" class="preview-body" lang="es">
+                Local Spanish translation will appear here.
+              </p>
+              <div id="translation-meta" class="preview-meta mono">No local translation yet</div>
+            </article>
+          </div>
+          <div class="preview-actions">
+            <span id="publish-note" class="publish-note"
+              >Publishing records local relay acceptance only; peer discovery requires network
+              reachability.</span
+            >
+            <button id="fixture" class="quiet" type="button">Add sample to history</button>
+            <button id="edit" class="quiet" type="button">Edit</button>
+            <button id="publish" class="primary" type="button" disabled>Publish to room</button>
+          </div>
+        </section>
+      </main>
+
+      <aside id="history-region" class="region history-region" aria-label="Announcement history">
+        <div class="history-head">
+          <div class="eyebrow">Announcements</div>
+          <span id="history-count" class="history-count mono">0</span>
+        </div>
+        <ul id="history" class="history-list"></ul>
+        <div id="empty-history" class="empty-history">
+          <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M7 3V20H13"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="7" cy="11" r="2.25" fill="currentColor" />
+            <path
+              d="M10.5 8.25H16.5M10.5 13.75H20"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+            />
+          </svg>
+          <strong>No announcements yet.</strong>
+          <p>Published and received alerts will stay on this device.</p>
+        </div>
+      </aside>
     </div>
-    <script type="module" src="app.js"></script>
+
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <aside id="proof-drawer" class="proof-drawer" aria-labelledby="proof-title" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <div class="eyebrow">Technical proof</div>
+          <h2 id="proof-title">Local and peer evidence</h2>
+        </div>
+        <button id="proof-close" class="quiet" type="button">Close</button>
+      </div>
+      <section class="proof-section">
+        <div class="field-label">Local translation</div>
+        <div class="proof-row"><span>Model</span><code>BERGAMOT_EN_ES</code></div>
+        <div class="proof-row">
+          <span>Lifecycle</span><code id="proof-translation-state">not loaded</code>
+        </div>
+        <div class="proof-row"><span>Cloud API key</span><code>none configured</code></div>
+      </section>
+      <section class="proof-section">
+        <div class="field-label">P2P runtime</div>
+        <div class="proof-row"><span>Worker</span><code>PearRuntime / Bare</code></div>
+        <div class="proof-row"><span>Room</span><code id="proof-room">not joined</code></div>
+        <div class="proof-row"><span>Connected peers</span><code id="proof-peers">0</code></div>
+      </section>
+      <section class="proof-section">
+        <div class="field-label">Event log</div>
+        <pre id="proof-log" class="mono"></pre>
+      </section>
+      <section class="proof-section privacy-note">
+        Translation runs on this device. Messages travel directly between reachable peers; peer
+        discovery requires network access.
+      </section>
+    </aside>
+
+    <script src="state.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

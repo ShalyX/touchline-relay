@@ -3,6 +3,7 @@ const path = require('path')
 const plink = require('pear-link')
 
 const pkg = require('./package.json')
+const { restoreQvacTranslationPrebuild } = require('./scripts/restore-qvac-prebuilds')
 const appName = pkg.productName ?? pkg.name
 
 function getWindowsKitVersion() {
@@ -88,10 +89,10 @@ module.exports = {
       name: 'pear-electron-forge-maker-flatpak',
       platforms: ['linux'],
       config: {
-        appId: 'com.pears.HelloPear',
+        appId: 'com.touchlinerelay.App',
         icon: `${packagerConfig.icon}.png`,
-        comment: 'Integrating Pear into a hello world electron desktop app',
-        categories: ['Development']
+        comment: 'Local tournament announcements with QVAC translation and Hyperswarm relay',
+        categories: ['Utility']
       }
     },
     {
@@ -100,13 +101,13 @@ module.exports = {
       config: {
         icon: `${packagerConfig.icon}.png`,
         snapcraft: {
-          summary: 'Integrating Pear into a hello world electron desktop app',
+          summary: 'Local tournament announcements with QVAC translation and Hyperswarm relay',
           description:
-            'End-to-end boilerplate for embedding pear-runtime into Electron apps and deploying peer-to-peer application updates.',
-          contact: 'hello@holepunchto.to',
-          license: 'Apache-2.0',
-          issues: 'https://github.com/holepunchto/hello-pear-electron/issues',
-          website: 'https://github.com/holepunchto/hello-pear-electron',
+            'Touchline Relay translates English matchday announcements to Spanish locally with QVAC and sends them directly to peers over Hyperswarm.',
+          contact: 'maintainers@touchlinerelay.local',
+          license: 'MIT',
+          issues: 'https://github.com/touchline-relay/touchline-relay/issues',
+          website: 'https://github.com/touchline-relay/touchline-relay',
           app: {
             extensions: ['gnome'],
             plugs: [
@@ -142,6 +143,10 @@ module.exports = {
         packageJson.upgrade = process.env.UPGRADE_KEY
       }
 
+      if (packageJson.updates === false && packageJson.upgrade === 'pear://<YOUR_KEY_HERE>') {
+        return packageJson
+      }
+
       try {
         plink.parse(packageJson.upgrade)
       } catch {
@@ -149,6 +154,16 @@ module.exports = {
       }
 
       return packageJson
+    },
+    postPackage: async (forgeConfig, options) => {
+      for (const outputPath of options.outputPaths) {
+        restoreQvacTranslationPrebuild({
+          projectRoot: __dirname,
+          outputPath,
+          platform: options.platform,
+          arch: options.arch
+        })
+      }
     },
     preMake: async () => {
       fs.rmSync(path.join(__dirname, 'out', 'make'), { recursive: true, force: true })

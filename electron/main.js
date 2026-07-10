@@ -3,6 +3,8 @@ const os = require('os')
 const path = require('path')
 const PearRuntime = require('pear-runtime')
 const FramedStream = require('framed-stream')
+const { createQvacTranslator } = require('../lib/qvac-translator')
+const { shouldRequestSingleInstanceLock } = require('./instance-policy')
 
 const { isMac, isLinux, isWindows } = require('which-runtime')
 const { command, flag } = require('paparam')
@@ -13,6 +15,12 @@ const protocol = name
 const mainWorkerSpecifier = '/workers/main.js'
 
 const workers = new Map()
+const translator = createQvacTranslator()
+const translationState = {
+  status: 'idle',
+  progress: null,
+  error: ''
+}
 
 const appName = productName ?? name
 
@@ -20,14 +28,17 @@ const cmd = command(
   appName,
   flag('--storage <dir>', 'pass custom storage to pear-runtime'),
   flag('--no-updates', 'start without OTA updates'),
-  flag('--no-sandbox', 'start without Chromium sandbox').hide()
+  flag('--no-sandbox', 'start without Chromium sandbox').hide(),
+  flag('--remote-debugging-port <port>', 'enable Chromium remote debugging').hide()
 )
 
 cmd.parse(app.isPackaged ? process.argv.slice(1) : process.argv.slice(2))
 
 const pearStore = cmd.flags.storage
-const updates = cmd.flags.updates
+const updates = pkg.updates === false ? false : cmd.flags.updates
+const remoteDebuggingPort = cmd.flags.remoteDebuggingPort
 
+if (remoteDebuggingPort) app.commandLine.appendSwitch('remote-debugging-port', remoteDebuggingPort)
 if (pearStore) app.setPath('userData', pearStore)
 
 ipcMain.on('pkg', (evt) => {
@@ -46,6 +57,12 @@ function sendToAll(name, data) {
     if (!win.isDestroyed()) win.webContents.send(name, data)
   }
 }
+
+translator.onProgress((progress) => {
+  translationState.progress = progress
+  translationState.status = 'loading'
+  sendToAll('qvac:progress', { status: translationState.status, progress })
+})
 
 function getWorker(specifier) {
   if (workers.has(specifier)) return workers.get(specifier)
@@ -114,8 +131,10 @@ function getWorker(specifier) {
 
 async function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1280,
+    height: 800,
+    minWidth: 760,
+    minHeight: 620,
     webPreferences: {
       preload: path.join(__dirname, '..', 'electron', 'preload.js'),
       sandbox: true,
@@ -170,6 +189,20 @@ ipcMain.handle('app:afterUpdate', () => {
   }
   app.quit()
 })
+ipcMain.handle('qvac:state', () => translationState)
+ipcMain.handle('qvac:translateToSpanish', async (evt, text) => {
+  translationState.status = 'loading'
+  translationState.error = ''
+  try {
+    const result = await translator.translateToSpanish(text)
+    translationState.status = 'ready'
+    return result
+  } catch (err) {
+    translationState.status = 'error'
+    translationState.error = err.message
+    throw err
+  }
+})
 
 function handleDeepLink(url) {
   console.log('deep link:', url)
@@ -182,7 +215,7 @@ app.on('open-url', (evt, url) => {
   handleDeepLink(url)
 })
 
-const lock = app.requestSingleInstanceLock()
+const lock = shouldRequestSingleInstanceLock(pearStore) ? app.requestSingleInstanceLock() : true
 
 if (!lock) {
   app.quit()
@@ -213,3 +246,9 @@ if (!lock) {
     }
   })
 }
+
+app.on('before-quit', () => {
+  translator.dispose().catch((err) => {
+    console.error('Failed to close QVAC translator:', err)
+  })
+})

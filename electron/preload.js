@@ -34,5 +34,12 @@ contextBridge.exposeInMainWorld('bridge', {
   },
   writeWorkerIPC: (specifier, data) => {
     return ipcRenderer.invoke('pear:worker:writeIPC:' + specifier, data)
+  },
+  translateToSpanish: (text) => ipcRenderer.invoke('qvac:translateToSpanish', text),
+  getTranslationState: () => ipcRenderer.invoke('qvac:state'),
+  onTranslationProgress: (listener) => {
+    const wrap = (evt, progress) => listener(progress)
+    ipcRenderer.on('qvac:progress', wrap)
+    return () => ipcRenderer.removeListener('qvac:progress', wrap)
   }
 })
