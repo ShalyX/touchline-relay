@@ -18,6 +18,7 @@
     "start": "electron-forge start -- --no-updates --no-sandbox",
     "start:demo-a": "electron-forge start -- --no-updates --storage /tmp/touchline-a --no-sandbox",
     "start:demo-b": "electron-forge start -- --no-updates --storage /tmp/touchline-b --no-sandbox",
+    "rebuild:native": "electron-rebuild -f -w rocksdb-native,udx-native,sodium-native,fs-native-extensions || electron-rebuild -f",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "make:zip": "electron-forge make --targets=@electron-forge/maker-zip",

@@ -62,6 +62,43 @@ rm -rf node_modules/electron
 npm rebuild electron
 ```
 
+
+## Windows setup (recording on a PC)
+
+If you see:
+
+```text
+Error: Cannot find addon '.' ... rocksdb-native
+```
+
+that almost always means a **broken/partial `npm install`** (e.g. earlier `ENOSPC`) or native modules not rebuilt for Electron.
+
+```powershell
+# 1) Free disk first (need ~10GB free)
+Get-PSDrive C
+
+# 2) Clean install
+cd C:\Users\USER\touchline-relay
+git pull
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
+npm cache clean --force
+npm install
+
+# 3) Rebuild natives for this Electron version
+npx --yes @electron/rebuild -f
+
+# 4) Confirm the Windows prebuild exists and is non-empty
+Get-Item .\node_modules\rocksdb-native\prebuilds\win32-x64\*.node | Format-Table Name,Length
+
+# 5) Start two peers
+npm start -- --storage .\demo-a
+# second terminal:
+npm start -- --storage .\demo-b
+```
+
+If rebuild fails, install [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) and retry `npx @electron/rebuild -f`.
+
 ## Run
 
 Development:
