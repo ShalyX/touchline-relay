@@ -16,7 +16,7 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
   let joined = null
   let discovery = null
   let closed = false
-  let peerId = b4a.toString(swarm.keyPair.publicKey, 'hex')
+  const peerId = b4a.toString(swarm.keyPair.publicKey, 'hex')
 
   swarm.on('connection', (socket) => {
     if (closed || !joined) {
