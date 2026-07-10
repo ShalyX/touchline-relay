@@ -70,16 +70,27 @@ Second peer (required for the demo; custom storage bypasses the single-instance 
 npm start -- --storage /tmp/touchline-b
 ```
 
-Root / CI hosts without a sandbox may need:
+Root / hermesbox (this machine runs as root):
 
 ```bash
-npm start -- --storage /tmp/touchline-a --no-sandbox
+# always pass --no-sandbox as root (also baked into npm start)
+npm start -- --storage /tmp/touchline-a
+
+# no display / SSH headless:
+xvfb-run -a npm start -- --storage /tmp/touchline-a
+```
+
+Demo helpers:
+
+```bash
+npm run start:demo-a
+npm run start:demo-b
 ```
 
 Optional Chromium remote debugging (used by automated QA):
 
 ```bash
-npm start -- --storage /tmp/touchline-a --no-sandbox --remote-debugging-port 9222
+npm start -- --storage /tmp/touchline-a --remote-debugging-port 9222
 ```
 
 ## Verify

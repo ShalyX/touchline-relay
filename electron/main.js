@@ -1,6 +1,15 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const os = require('os')
 const path = require('path')
+
+// Chromium refuses to start as root unless the sandbox is disabled. Apply early so
+// hermesbox / CI / container demos work without a non-root user.
+const runningAsRoot = typeof process.getuid === 'function' && process.getuid() === 0
+if (runningAsRoot || process.argv.includes('--no-sandbox')) {
+  app.commandLine.appendSwitch('no-sandbox')
+  app.commandLine.appendSwitch('disable-setuid-sandbox')
+}
+
 const PearRuntime = require('pear-runtime')
 const FramedStream = require('framed-stream')
 const { createQvacTranslator } = require('../lib/qvac-translator')
@@ -32,7 +41,11 @@ const cmd = command(
   flag('--remote-debugging-port <port>', 'enable Chromium remote debugging').hide()
 )
 
-cmd.parse(app.isPackaged ? process.argv.slice(1) : process.argv.slice(2))
+cmd.parse(
+  (app.isPackaged ? process.argv.slice(1) : process.argv.slice(2)).filter(
+    (arg) => arg !== '.' && arg !== '--'
+  )
+)
 
 const pearStore = cmd.flags.storage
 const updates = pkg.updates === false ? false : cmd.flags.updates

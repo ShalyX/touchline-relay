@@ -15,7 +15,9 @@
     "qvac:smoke": "node scripts/qvac-smoke.js",
     "lint": "prettier --check . && lunte electron lib renderer scripts test workers forge.config.js",
     "format": "prettier --write . && lunte --fix electron lib renderer scripts test workers forge.config.js",
-    "start": "electron-forge start -- --no-updates",
+    "start": "electron-forge start -- --no-updates --no-sandbox",
+    "start:demo-a": "electron-forge start -- --no-updates --storage /tmp/touchline-a --no-sandbox",
+    "start:demo-b": "electron-forge start -- --no-updates --storage /tmp/touchline-b --no-sandbox",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
