@@ -2,7 +2,7 @@
 
 **Translate one tournament alert locally with QVAC, then deliver the bilingual update directly to joined peers through PearRuntime and Hyperswarm—without an application server.**
 
-Touchline Relay is a desktop matchday tool for grassroots football tournaments. An organizer writes a short operational update, translates it from English to Spanish on-device with QVAC Bergamot, previews both versions, and publishes a structured announcement to a shared room. A second app instance receives it over Hyperswarm and keeps it in local history.
+Touchline Relay is a desktop matchday tool for grassroots football tournaments. An organizer writes a short operational update, translates it on-device with QVAC Bergamot (English → Spanish, French, German, or Portuguese), previews both versions, and publishes a structured announcement to a shared room. A second app instance receives it over Hyperswarm and keeps it in local history.
 
 ## Why this exists
 
@@ -10,12 +10,12 @@ Tournament updates often get lost across WhatsApp, email, and team apps. When a 
 
 ## Sponsor stack (load-bearing)
 
-| Layer         | Technology                      | Role                                                     |
-| ------------- | ------------------------------- | -------------------------------------------------------- |
-| Local AI      | **QVAC SDK** + `BERGAMOT_EN_ES` | English → Spanish translation on the organizer’s machine |
-| Desktop shell | **Electron** (Forge package)    | UI + main-process QVAC lifecycle                         |
-| P2P runtime   | **PearRuntime** / Bare worker   | Owns Hyperswarm membership and relay                     |
-| Networking    | **Hyperswarm**                  | Direct peer delivery of structured announcements         |
+| Layer         | Technology                             | Role                                             |
+| ------------- | -------------------------------------- | ------------------------------------------------ |
+| Local AI      | **QVAC SDK** + Bergamot EN→ES/FR/DE/PT | On-device translation on the organizer’s machine |
+| Desktop shell | **Electron** (Forge package)           | UI + main-process QVAC lifecycle                 |
+| P2P runtime   | **PearRuntime** / Bare worker          | Owns Hyperswarm membership and relay             |
+| Networking    | **Hyperswarm**                         | Direct peer delivery of structured announcements |
 
 There is no cloud translation API, application server, account system, wallet, or general chat feed.
 
@@ -24,6 +24,12 @@ There is no cloud translation API, application server, account system, wallet, o
 - Translation runs **locally** after the Bergamot model is cached.
 - Messages travel **directly between reachable peers**.
 - Peer **discovery still requires network reachability** (Hyperswarm bootstrap / DHT). This is not claimed as fully offline LAN messaging.
+
+## For judges
+
+- **3-minute voiceover + shot list:** [`docs/demo-script.md`](docs/demo-script.md)
+- **Submission paste pack:** [`docs/submission-draft.md`](docs/submission-draft.md)
+- **What we cut:** [`docs/roadmap.md`](docs/roadmap.md)
 
 ## Demo workflow (about 2 minutes)
 
