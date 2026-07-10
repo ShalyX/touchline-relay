@@ -7,38 +7,40 @@
     <style>
       :root {
         color-scheme: dark;
-        --canvas: #0b0d0e;
-        --surface-1: #111416;
-        --surface-2: #171a1d;
-        --surface-3: #202428;
-        --ink: #f4f2ed;
-        --ink-secondary: #c1c4c2;
-        --muted: #858b89;
-        --faint: #5e6462;
-        --line: rgba(244, 242, 237, 0.1);
-        --line-strong: rgba(244, 242, 237, 0.18);
+        --canvas: #0a0b0c;
+        --surface-0: #0e1011;
+        --surface-1: #121416;
+        --surface-2: #181b1e;
+        --surface-3: #1f2327;
+        --ink: #f3f1ec;
+        --ink-secondary: #b8bcba;
+        --muted: #7d8481;
+        --faint: #5a605e;
+        --line: rgba(243, 241, 236, 0.08);
+        --line-strong: rgba(243, 241, 236, 0.14);
         --relay: #ff714a;
         --relay-hover: #ff8565;
         --relay-pressed: #e65f3c;
         --relay-ink: #160b07;
-        --ready: #63b88a;
-        --warning: #d8a84e;
-        --danger: #e16b62;
-        --inactive: #717775;
-        font-family:
-          Geist,
-          Inter,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          sans-serif;
+        --ready: #5fbf8f;
+        --warning: #d4a24c;
+        --danger: #e06b63;
+        --inactive: #6a7070;
+        --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+        --sans:
+          Inter, 'SF Pro Text', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --mono: 'SF Mono', 'Geist Mono', ui-monospace, Menlo, Consolas, monospace;
+        font-family: var(--sans);
+        font-feature-settings:
+          'ss01' on,
+          'cv11' on;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
 
       * {
         box-sizing: border-box;
       }
-
       html,
       body {
         width: 100%;
@@ -54,8 +56,8 @@
       select,
       textarea {
         font: inherit;
+        color: inherit;
       }
-
       button,
       input,
       select,
@@ -63,7 +65,6 @@
       [tabindex] {
         outline: none;
       }
-
       button:focus-visible,
       input:focus-visible,
       select:focus-visible,
@@ -74,202 +75,196 @@
       }
 
       button {
-        min-height: 38px;
+        min-height: 36px;
+        padding: 0 12px;
         border: 1px solid var(--line-strong);
-        border-radius: 5px;
+        border-radius: 6px;
         background: transparent;
         color: var(--ink);
         cursor: pointer;
+        letter-spacing: -0.01em;
       }
-
       button:hover:not(:disabled) {
-        border-color: rgba(244, 242, 237, 0.34);
         background: var(--surface-2);
+        border-color: rgba(243, 241, 236, 0.28);
       }
-
       button:active:not(:disabled) {
         transform: translateY(1px);
         background: var(--surface-3);
       }
-
       button:disabled {
         cursor: not-allowed;
         color: var(--faint);
         border-color: var(--line);
+        opacity: 0.72;
       }
-
       button.primary {
-        min-height: 42px;
-        padding: 0 18px;
+        min-height: 40px;
+        padding: 0 16px;
         border-color: var(--relay);
         background: var(--relay);
         color: var(--relay-ink);
-        font-weight: 650;
+        font-weight: 600;
       }
-
       button.primary:hover:not(:disabled) {
         border-color: var(--relay-hover);
         background: var(--relay-hover);
       }
-
       button.primary:active:not(:disabled) {
         background: var(--relay-pressed);
       }
-
       button.primary:disabled {
-        border-color: var(--line-strong);
         background: var(--surface-3);
+        border-color: var(--line-strong);
         color: var(--faint);
       }
-
       button.quiet {
-        min-height: 36px;
+        min-height: 32px;
         padding: 0 8px;
         border-color: transparent;
         color: var(--ink-secondary);
       }
+      button.quiet:hover:not(:disabled) {
+        color: var(--ink);
+        background: var(--surface-2);
+      }
 
       .mono {
-        font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-family: var(--mono);
         font-variant-numeric: tabular-nums;
       }
 
+      /* —— Top bar —— */
       .topbar {
-        position: relative;
-        z-index: 20;
         display: grid;
-        grid-template-columns: minmax(190px, auto) 1fr auto;
+        grid-template-columns: 1fr auto;
         align-items: center;
-        height: 56px;
-        padding: 0 16px 0 20px;
+        height: 52px;
+        padding: 0 16px 0 18px;
         border-bottom: 1px solid var(--line);
-        background: var(--canvas);
+        background: rgba(10, 11, 12, 0.92);
+        backdrop-filter: blur(10px);
       }
-
-      .brand,
       .brand-copy,
+      .brand,
       .top-actions,
       .room-context,
       .health-indicator {
         display: flex;
         align-items: center;
       }
-
       .brand {
         gap: 10px;
         min-width: 0;
       }
-
       .brand-copy {
-        gap: 18px;
+        gap: 16px;
         min-width: 0;
       }
-
       .mark {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         flex: 0 0 auto;
         color: var(--ink);
       }
-
       .wordmark {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
         white-space: nowrap;
-        font-size: 14px;
-        font-weight: 650;
-        letter-spacing: -0.02em;
       }
-
       .room-context {
-        gap: 7px;
+        gap: 6px;
         min-width: 0;
+        max-width: 280px;
         color: var(--muted);
         font-size: 12px;
+        letter-spacing: -0.01em;
       }
-
       .room-context svg {
         flex: 0 0 auto;
+        opacity: 0.7;
       }
-
       #top-room {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        color: var(--ink-secondary);
       }
-
       .top-actions {
+        gap: 6px;
         justify-content: flex-end;
-        gap: 8px;
       }
-
       .health-indicator {
-        gap: 8px;
+        gap: 7px;
         min-height: 28px;
         padding: 0 10px;
         border: 1px solid var(--line);
         border-radius: 999px;
         color: var(--ink-secondary);
         font-size: 11px;
-        white-space: nowrap;
+        letter-spacing: -0.01em;
+        background: transparent;
       }
-
+      .health-indicator strong {
+        color: var(--ink);
+        font-weight: 550;
+      }
       .status-dot {
         width: 6px;
         height: 6px;
-        flex: 0 0 auto;
         border-radius: 50%;
         background: var(--inactive);
+        flex: 0 0 auto;
       }
-
       .status-dot.ready {
         background: var(--ready);
+        box-shadow: 0 0 0 3px rgba(95, 191, 143, 0.12);
       }
-
       .status-dot.warning {
         background: var(--warning);
       }
-
       .top-button {
-        min-height: 36px;
-        padding: 0 10px;
+        min-height: 28px;
+        padding: 0 9px;
         border-color: transparent;
-        color: var(--ink-secondary);
+        color: var(--muted);
         font-size: 12px;
       }
-
+      .top-button:hover:not(:disabled) {
+        color: var(--ink);
+      }
       #history-toggle,
       #room-toggle {
         display: none;
       }
 
+      /* —— Workspace —— */
       .workspace {
         display: grid;
-        grid-template-columns: 220px minmax(0, 1fr) 320px;
-        height: calc(100% - 56px);
+        grid-template-columns: 232px minmax(0, 1fr) 340px;
+        height: calc(100% - 52px);
       }
-
       .region {
         min-width: 0;
         overflow-y: auto;
+        scrollbar-width: thin;
         scrollbar-color: var(--surface-3) transparent;
       }
-
       .room-rail,
       .composer {
         border-right: 1px solid var(--line);
       }
-
       .room-rail {
-        padding: 24px 20px;
-        background: var(--canvas);
+        padding: 22px 18px;
+        background: var(--surface-0);
       }
-
       .composer {
-        padding: 24px;
+        padding: 28px 32px 32px;
         background: var(--surface-1);
       }
-
       .history-region {
-        padding: 24px 0;
+        padding: 18px 0;
         background: var(--canvas);
       }
 
@@ -277,59 +272,59 @@
       .field-label,
       .preview-label {
         color: var(--muted);
-        font-size: 11px;
-        font-weight: 650;
-        letter-spacing: 0.08em;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
       }
-
       h1,
       h2,
       p {
         margin-top: 0;
       }
-
       h1 {
-        margin-bottom: 6px;
-        font-size: 28px;
-        font-weight: 620;
-        line-height: 32px;
-        letter-spacing: -0.035em;
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        font-weight: 560;
+        letter-spacing: -0.04em;
       }
-
       h2 {
-        margin: 6px 0 0;
-        font-size: 18px;
-        font-weight: 620;
-        line-height: 24px;
-        letter-spacing: -0.02em;
+        margin: 8px 0 0;
+        font-size: 15px;
+        line-height: 1.3;
+        font-weight: 560;
+        letter-spacing: -0.025em;
       }
 
       .section-heading {
         display: flex;
-        align-items: start;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 22px;
       }
-
+      .section-heading .eyebrow {
+        margin-bottom: 8px;
+      }
       .draft-status {
-        padding-top: 18px;
+        margin-top: 22px;
         color: var(--muted);
-        font-size: 12px;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         white-space: nowrap;
       }
 
       .field {
         display: grid;
-        gap: 8px;
+        gap: 7px;
         min-width: 0;
       }
-
       .room-form {
         display: grid;
         gap: 12px;
-        margin-top: 24px;
+        margin-top: 20px;
       }
 
       input,
@@ -337,19 +332,40 @@
       textarea {
         width: 100%;
         border: 1px solid var(--line-strong);
-        border-radius: 5px;
+        border-radius: 6px;
         background: var(--surface-2);
         color: var(--ink);
       }
-
       input,
       select {
-        height: 38px;
+        height: 36px;
         padding: 0 11px;
       }
-
       select {
+        appearance: none;
         color-scheme: dark;
+        background-image:
+          linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+          linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+        background-position:
+          calc(100% - 14px) 16px,
+          calc(100% - 10px) 16px;
+        background-size:
+          4px 4px,
+          4px 4px;
+        background-repeat: no-repeat;
+        padding-right: 28px;
+      }
+      input:hover,
+      select:hover,
+      textarea:hover {
+        border-color: rgba(243, 241, 236, 0.24);
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: rgba(255, 113, 74, 0.55);
+        box-shadow: 0 0 0 3px rgba(255, 113, 74, 0.12);
       }
 
       .room-note,
@@ -357,86 +373,77 @@
       .privacy-note {
         color: var(--muted);
         font-size: 12px;
-        line-height: 18px;
+        line-height: 1.5;
       }
-
       .room-note {
-        margin: 16px 0 0;
+        margin: 4px 0 0;
       }
-
       .room-facts {
         display: none;
-        margin-top: 24px;
+        margin-top: 18px;
       }
-
       body.room-joined .room-form {
         display: none;
       }
-
       body.room-joined .room-facts {
         display: block;
       }
-
       .room-name {
         margin: 0 0 4px;
-        overflow-wrap: anywhere;
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 600;
+        letter-spacing: -0.02em;
+        overflow-wrap: anywhere;
       }
-
       .room-key {
         color: var(--muted);
         font-size: 11px;
       }
-
       .fact-row {
         display: flex;
         justify-content: space-between;
         gap: 12px;
-        padding: 11px 0;
+        padding: 10px 0;
         border-bottom: 1px solid var(--line);
         color: var(--muted);
         font-size: 12px;
       }
-
       .fact-row strong {
         color: var(--ink-secondary);
-        font-weight: 550;
+        font-weight: 520;
         text-align: right;
       }
-
       .room-actions {
         display: flex;
-        gap: 8px;
-        margin: 10px -8px 16px;
+        gap: 4px;
+        margin: 8px -8px 12px;
       }
-
       .privacy-facts {
-        margin-top: 16px;
+        margin-top: 12px;
         border-top: 1px solid var(--line-strong);
       }
 
       .structured-controls {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 10px;
+        margin-bottom: 14px;
       }
 
       .message-field {
         position: relative;
         display: block;
       }
-
       textarea {
-        min-height: 156px;
+        min-height: 168px;
         padding: 16px 16px 34px;
         resize: vertical;
         border-color: transparent;
-        line-height: 26px;
-        font-size: 17px;
+        background: var(--surface-2);
+        font-size: 16px;
+        line-height: 1.55;
+        letter-spacing: -0.015em;
       }
-
       .character-count {
         position: absolute;
         right: 12px;
@@ -450,280 +457,267 @@
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        min-height: 58px;
-        padding: 8px 0;
+        min-height: 52px;
+        padding: 6px 0 4px;
       }
-
       .action-feedback {
         min-width: 0;
         margin: 0;
         color: var(--muted);
         font-size: 12px;
-        line-height: 18px;
+        line-height: 1.45;
       }
-
       .action-feedback.error {
         color: var(--danger);
       }
-
       .translate-button {
-        min-width: 154px;
+        min-width: 148px;
       }
 
+      /* —— Preview as product visual —— */
       .preview-section {
-        padding-top: 20px;
-        border-top: 1px solid var(--line-strong);
+        margin-top: 8px;
+        padding: 0;
+        border: 1px solid var(--line-strong);
+        border-radius: 10px;
+        background: var(--surface-0);
+        overflow: hidden;
       }
-
       .preview-head {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 16px;
-        margin-bottom: 14px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.015);
       }
-
       .sample-flag,
       .stale-flag {
         color: var(--warning);
-        font-size: 11px;
-        letter-spacing: 0.04em;
+        font-size: 10px;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
       }
-
       .stale-flag {
         display: none;
       }
-
       .preview-section.stale .stale-flag {
         display: inline;
       }
-
       .preview-section.stale .sample-flag {
         display: none;
       }
-
+      .preview-section.ready {
+        border-color: rgba(255, 113, 74, 0.28);
+      }
       .preview-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-
       .preview-pane {
         min-width: 0;
-        padding: 16px 20px 18px 0;
+        padding: 18px 18px 16px;
       }
-
       .preview-pane + .preview-pane {
-        padding-left: 20px;
         border-left: 1px solid var(--line);
       }
-
       .preview-body {
-        max-width: 68ch;
-        min-height: 88px;
-        margin: 10px 0 14px;
+        max-width: 42ch;
+        min-height: 96px;
+        margin: 12px 0 14px;
         color: var(--ink);
-        font-size: 18px;
+        font-family: var(--serif);
+        font-size: 19px;
         font-weight: 450;
-        line-height: 28px;
+        line-height: 1.45;
+        letter-spacing: -0.015em;
         white-space: pre-wrap;
         user-select: text;
       }
-
       .preview-meta {
         color: var(--muted);
-        font-size: 11px;
-        line-height: 16px;
+        font-size: 10px;
+        line-height: 1.4;
+        letter-spacing: 0.02em;
       }
-
       .preview-actions {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 8px;
-        padding-top: 14px;
+        gap: 6px;
+        padding: 12px 14px;
         border-top: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.12);
       }
-
       .publish-note {
         margin-right: auto;
+        max-width: 42ch;
         color: var(--muted);
         font-size: 11px;
-        line-height: 16px;
+        line-height: 1.4;
       }
 
+      /* —— History —— */
       .history-head {
         display: flex;
         justify-content: space-between;
-        padding: 0 20px 18px;
+        align-items: baseline;
+        padding: 4px 18px 14px;
         border-bottom: 1px solid var(--line);
       }
-
       .history-count {
         color: var(--muted);
-        font-size: 12px;
+        font-size: 11px;
       }
-
       .history-list {
         padding: 0;
         margin: 0;
         list-style: none;
       }
-
       .history-item {
         position: relative;
-        padding: 16px 20px;
+        padding: 14px 18px;
         border-bottom: 1px solid var(--line);
         cursor: pointer;
       }
-
       .history-item:hover,
       .history-item:focus-within {
         background: var(--surface-2);
       }
-
       .history-item.selected {
-        padding-left: 18px;
+        padding-left: 16px;
         border-left: 2px solid var(--relay);
         background: var(--surface-2);
       }
-
       .history-item.sample::after {
-        content: 'LOCAL SAMPLE';
+        content: 'SAMPLE';
         position: absolute;
-        top: 16px;
-        right: 20px;
+        top: 14px;
+        right: 18px;
         color: var(--warning);
         font-size: 9px;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
       }
-
       .history-meta,
       .history-footer {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
         color: var(--muted);
         font-size: 10px;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
       }
-
       .history-meta {
-        padding-right: 74px;
+        padding-right: 64px;
       }
-
       .history-meta strong {
         overflow: hidden;
         color: var(--ink-secondary);
         font-weight: 600;
         text-overflow: ellipsis;
         white-space: nowrap;
+        letter-spacing: -0.01em;
+        text-transform: none;
       }
-
       .history-copy {
         display: -webkit-box;
         overflow: hidden;
-        margin: 10px 0 0;
+        margin: 8px 0 0;
         color: var(--ink);
         font-size: 13px;
-        line-height: 19px;
+        line-height: 1.45;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
       }
-
       .history-copy.translated {
-        margin-top: 5px;
+        margin-top: 4px;
         color: var(--ink-secondary);
       }
-
       .history-footer {
-        margin-top: 12px;
+        margin-top: 10px;
         text-transform: none;
+        letter-spacing: 0;
+        font-size: 11px;
       }
-
       .empty-history {
-        padding: 42px 28px;
+        padding: 48px 24px;
         color: var(--muted);
       }
-
       .empty-history .mark {
-        width: 20px;
-        height: 20px;
-        margin-bottom: 18px;
-        color: var(--muted);
+        width: 18px;
+        height: 18px;
+        margin-bottom: 16px;
+        color: var(--faint);
       }
-
       .empty-history strong {
         display: block;
         margin-bottom: 6px;
         color: var(--ink-secondary);
         font-size: 13px;
+        letter-spacing: -0.02em;
       }
-
       .empty-history p {
-        max-width: 220px;
+        max-width: 200px;
+        margin: 0;
         font-size: 12px;
-        line-height: 18px;
+        line-height: 1.5;
       }
 
+      /* —— Drawers —— */
       .drawer-backdrop {
         position: fixed;
         z-index: 29;
-        inset: 56px 0 0;
+        inset: 52px 0 0;
         display: none;
-        background: rgba(0, 0, 0, 0.46);
+        background: rgba(0, 0, 0, 0.5);
       }
-
       .drawer-backdrop.open {
         display: block;
       }
-
       .proof-drawer {
         position: fixed;
         z-index: 30;
-        top: 56px;
+        top: 52px;
         right: 0;
         bottom: 0;
-        width: min(420px, 100vw);
-        padding: 24px;
+        width: min(400px, 100vw);
+        padding: 22px;
         overflow-y: auto;
         border-left: 1px solid var(--line-strong);
         background: var(--surface-1);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        box-shadow: -24px 0 60px rgba(0, 0, 0, 0.4);
         transform: translateX(100%);
         visibility: hidden;
       }
-
       .proof-drawer.open {
         transform: translateX(0);
         visibility: visible;
       }
-
       .drawer-head {
         display: flex;
         align-items: start;
         justify-content: space-between;
-        margin-bottom: 24px;
+        margin-bottom: 18px;
       }
-
       .proof-section {
-        padding: 16px 0;
+        padding: 14px 0;
         border-top: 1px solid var(--line);
       }
-
       .proof-row {
         display: grid;
-        grid-template-columns: 120px minmax(0, 1fr);
-        gap: 12px;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 10px;
         padding: 5px 0;
         color: var(--muted);
         font-size: 11px;
       }
-
       .proof-row code {
         overflow-wrap: anywhere;
         color: var(--ink-secondary);
+        font-family: var(--mono);
       }
-
       #proof-log {
         max-height: 180px;
         overflow: auto;
@@ -731,200 +725,147 @@
         color: var(--muted);
         white-space: pre-wrap;
         font-size: 10px;
-        line-height: 16px;
+        line-height: 1.5;
       }
 
       @media (min-width: 1440px) {
         .workspace {
-          grid-template-columns: 240px minmax(0, 1fr) 360px;
+          grid-template-columns: 248px minmax(0, 1fr) 360px;
+        }
+        .composer {
+          padding-left: 40px;
+          padding-right: 40px;
         }
       }
-
       @media (max-width: 1179px) {
         .workspace {
           grid-template-columns: 220px minmax(0, 1fr) 300px;
         }
-
         body.room-joined .workspace {
           grid-template-columns: 0 minmax(0, 1fr) 300px;
         }
-
         body.room-joined .room-rail {
           padding: 0;
           border: 0;
           overflow: visible;
         }
-
         body.room-joined .room-rail > * {
           display: none;
         }
-
         body.room-joined #room-toggle {
           display: inline-flex;
         }
-
         body.room-joined .room-rail.open {
           position: fixed;
           z-index: 31;
-          top: 56px;
+          top: 52px;
           bottom: 0;
           left: 0;
           display: block;
           width: 280px;
           padding: 20px;
           border-right: 1px solid var(--line-strong);
-          background: var(--canvas);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+          background: var(--surface-0);
+          box-shadow: 24px 0 60px rgba(0, 0, 0, 0.45);
         }
-
         body.room-joined .room-rail.open > * {
           display: block;
         }
-
         .preview-grid {
           grid-template-columns: 1fr;
         }
-
         .preview-pane + .preview-pane {
-          padding-left: 0;
-          border-top: 1px solid var(--line);
           border-left: 0;
+          border-top: 1px solid var(--line);
         }
       }
-
       @media (max-width: 899px) {
         .topbar {
-          grid-template-columns: minmax(140px, 1fr) auto;
-          padding-left: 14px;
+          grid-template-columns: minmax(120px, 1fr) auto;
+          padding-left: 12px;
         }
-
         .brand-copy {
-          gap: 12px;
+          gap: 10px;
         }
-
         .room-context,
         .health-indicator span:not(.status-dot) {
           display: none;
         }
-
         .health-indicator {
           width: 28px;
           justify-content: center;
           padding: 0;
         }
-
         #history-toggle,
         #room-toggle {
           display: inline-flex;
         }
-
         .workspace,
         body.room-joined .workspace {
           display: block;
         }
-
         .composer {
           height: 100%;
           border-right: 0;
+          padding: 20px 16px;
         }
-
         .room-rail {
           position: fixed;
           z-index: 31;
-          top: 56px;
+          top: 52px;
           bottom: 0;
           left: 0;
           display: none;
           width: 280px;
-          padding: 20px;
+          padding: 18px;
           border-right: 1px solid var(--line-strong);
-          background: var(--canvas);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+          background: var(--surface-0);
+          box-shadow: 24px 0 60px rgba(0, 0, 0, 0.45);
         }
-
         .room-rail.open,
         body:not(.room-joined):not(.room-sheet-dismissed) .room-rail,
         body.room-joined .room-rail.open {
           display: block;
         }
-
-        body.room-joined .room-rail.open > * {
-          display: block;
-        }
-
         .history-region {
           position: fixed;
           z-index: 31;
-          top: 56px;
+          top: 52px;
           right: 0;
           bottom: 0;
           display: none;
           width: min(340px, 92vw);
           border-left: 1px solid var(--line-strong);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+          box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
+          background: var(--canvas);
         }
-
         .history-region.open {
           display: block;
         }
-
         .structured-controls {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-
         .structured-controls .field:last-child {
           grid-column: 1 / -1;
         }
       }
-
-      @media (max-width: 780px) {
-        .wordmark {
-          font-size: 13px;
-        }
-
-        .top-actions {
-          gap: 2px;
-        }
-
-        .composer {
-          padding: 18px 16px;
-        }
-
-        .section-heading {
-          margin-bottom: 18px;
-        }
-
-        h1 {
-          font-size: 24px;
-          line-height: 29px;
-        }
-
-        .preview-body {
-          min-height: 0;
-        }
-      }
-
       @media (max-height: 699px) {
         .composer,
         .room-rail {
-          padding-top: 16px;
-          padding-bottom: 16px;
+          padding-top: 14px;
+          padding-bottom: 14px;
         }
-
         .section-heading {
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
-
         textarea {
           min-height: 112px;
         }
-
-        .preview-pane {
-          padding-top: 12px;
-          padding-bottom: 12px;
+        .preview-body {
+          min-height: 0;
+          font-size: 17px;
         }
       }
-
       @media (prefers-reduced-motion: no-preference) {
         button,
         .proof-drawer {
@@ -934,12 +875,10 @@
             color 120ms ease-out,
             transform 200ms ease-out;
         }
-
         .preview-section.ready {
           animation: preview-in 180ms ease-out;
         }
       }
-
       @keyframes preview-in {
         from {
           opacity: 0;
@@ -950,7 +889,6 @@
           transform: translateY(0);
         }
       }
-
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -960,7 +898,6 @@
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
         }
-
         button:active:not(:disabled) {
           transform: none;
         }
@@ -990,7 +927,7 @@
           <span class="wordmark">Touchline Relay</span>
         </div>
         <div class="room-context" aria-live="polite">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="5.5" cy="7" r="2.5" stroke="currentColor" stroke-width="1.4" />
             <path
               d="M7.5 8.5L12.5 13.5M10 11L11.5 9.5"
@@ -1002,7 +939,6 @@
           <span id="top-room">No room joined</span>
         </div>
       </div>
-      <div></div>
       <nav class="top-actions" aria-label="System health and drawers">
         <button id="room-toggle" class="top-button" type="button">Room</button>
         <button
@@ -1012,7 +948,7 @@
           title="Local translation · Not loaded"
         >
           <span id="translation-dot" class="status-dot"></span>
-          <span>Local translation · <strong id="qvac-status">Not loaded</strong></span>
+          <span>Translation · <strong id="qvac-status">Not loaded</strong></span>
         </button>
         <button
           id="relay-health"
@@ -1021,7 +957,7 @@
           title="P2P relay · Not joined"
         >
           <span id="relay-dot" class="status-dot"></span>
-          <span>P2P relay · <strong id="p2p-status">Not joined</strong></span>
+          <span>Relay · <strong id="p2p-status">Not joined</strong></span>
         </button>
         <button id="history-toggle" class="top-button" type="button">
           History (<span id="history-count-top">0</span>)
@@ -1032,17 +968,15 @@
 
     <div class="workspace">
       <aside id="room-rail" class="region room-rail" aria-label="Room controls">
-        <div class="eyebrow">Room</div>
-        <h2>Join the matchday channel</h2>
+        <div class="eyebrow">Channel</div>
+        <h2>Matchday room</h2>
         <div class="room-form">
           <label class="field" for="room">
-            <span class="field-label">Room key or name</span>
-            <input id="room" value="saturday-final" autocomplete="off" />
+            <span class="field-label">Room key</span>
+            <input id="room" value="saturday-final" autocomplete="off" spellcheck="false" />
           </label>
           <button id="join" type="button">Join room</button>
-          <p class="room-note">
-            Peers connect directly over the network. Discovery requires network reachability.
-          </p>
+          <p class="room-note">Direct peer sockets. Discovery needs network reachability.</p>
         </div>
         <div class="room-facts">
           <p id="joined-room-name" class="room-name">—</p>
@@ -1052,7 +986,7 @@
           </div>
           <div class="fact-row"><span>Peers</span><strong id="peer-count">0 · waiting</strong></div>
           <div class="room-actions">
-            <button id="copy-room" class="quiet" type="button">Copy room key</button>
+            <button id="copy-room" class="quiet" type="button">Copy key</button>
             <button
               id="leave-room"
               class="quiet"
@@ -1064,21 +998,18 @@
             </button>
           </div>
           <div class="privacy-facts">
-            <div class="fact-row"><span>Application server</span><strong>None</strong></div>
-            <div class="fact-row"><span>Message history</span><strong>This device</strong></div>
+            <div class="fact-row"><span>App server</span><strong>None</strong></div>
+            <div class="fact-row"><span>History</span><strong>This device</strong></div>
           </div>
-          <p class="privacy-note">
-            Direct relay acceptance is not universal delivery. Reachable peers receive announcements
-            over P2P sockets.
-          </p>
+          <p class="privacy-note">Local relay acceptance is not universal delivery.</p>
         </div>
       </aside>
 
       <main class="region composer">
         <div class="section-heading">
           <div>
-            <div class="eyebrow">New alert</div>
-            <h1>Compose matchday update</h1>
+            <div class="eyebrow">Compose</div>
+            <h1>Operational update</h1>
           </div>
           <span id="draft-status" class="draft-status">Not translated</span>
         </div>
@@ -1102,7 +1033,7 @@
             </select>
           </label>
           <label class="field" for="language">
-            <span class="field-label">Translate to</span>
+            <span class="field-label">Target</span>
             <select id="language">
               <option value="es">Spanish · ES</option>
             </select>
@@ -1110,7 +1041,7 @@
         </div>
 
         <label class="field" for="body">
-          <span class="field-label">Announcement</span>
+          <span class="field-label">Message</span>
           <span class="message-field">
             <textarea id="body" maxlength="420" placeholder="Write a short operational update…">
 Kickoff moves to Pitch 2 at 14:30.</textarea
@@ -1128,10 +1059,8 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
 
         <section id="preview" class="preview-section" aria-live="polite">
           <div class="preview-head">
-            <span class="eyebrow">Preview</span>
-            <span id="sample-flag" class="sample-flag"
-              >Local visual sample · no model or network activity</span
-            >
+            <span class="eyebrow">Bilingual preview</span>
+            <span id="sample-flag" class="sample-flag">Awaiting local translation</span>
             <span class="stale-flag">Out of date · retranslate to publish</span>
           </div>
           <div class="preview-grid">
@@ -1140,10 +1069,10 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
               <p id="original-preview" class="preview-body" lang="en">
                 Translate an announcement to preview the original here.
               </p>
-              <div class="preview-meta mono">Structured venue tags stay with the alert</div>
+              <div class="preview-meta mono">Venue tags remain structured fields</div>
             </article>
             <article class="preview-pane">
-              <div class="preview-label">Spanish · Local translation</div>
+              <div class="preview-label">Spanish · On-device</div>
               <p id="translated-preview" class="preview-body" lang="es">
                 Local Spanish translation will appear here.
               </p>
@@ -1152,10 +1081,9 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
           </div>
           <div class="preview-actions">
             <span id="publish-note" class="publish-note"
-              >Publishing records local relay acceptance only; peer discovery requires network
-              reachability.</span
+              >Publish records local relay acceptance only.</span
             >
-            <button id="fixture" class="quiet" type="button">Add sample to history</button>
+            <button id="fixture" class="quiet" type="button">Sample row</button>
             <button id="edit" class="quiet" type="button">Edit</button>
             <button id="publish" class="primary" type="button" disabled>Publish to room</button>
           </div>
@@ -1185,8 +1113,8 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
               stroke-linecap="round"
             />
           </svg>
-          <strong>No announcements yet.</strong>
-          <p>Published and received alerts will stay on this device.</p>
+          <strong>No announcements yet</strong>
+          <p>Published and received alerts stay on this device.</p>
         </div>
       </aside>
     </div>
@@ -1195,8 +1123,8 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
     <aside id="proof-drawer" class="proof-drawer" aria-labelledby="proof-title" aria-hidden="true">
       <div class="drawer-head">
         <div>
-          <div class="eyebrow">Technical proof</div>
-          <h2 id="proof-title">Local and peer evidence</h2>
+          <div class="eyebrow">Evidence</div>
+          <h2 id="proof-title">Runtime proof</h2>
         </div>
         <button id="proof-close" class="quiet" type="button">Close</button>
       </div>
@@ -1206,21 +1134,21 @@ Kickoff moves to Pitch 2 at 14:30.</textarea
         <div class="proof-row">
           <span>Lifecycle</span><code id="proof-translation-state">not loaded</code>
         </div>
-        <div class="proof-row"><span>Cloud API key</span><code>none configured</code></div>
+        <div class="proof-row"><span>Cloud API key</span><code>none</code></div>
       </section>
       <section class="proof-section">
         <div class="field-label">P2P runtime</div>
         <div class="proof-row"><span>Worker</span><code>PearRuntime / Bare</code></div>
         <div class="proof-row"><span>Room</span><code id="proof-room">not joined</code></div>
-        <div class="proof-row"><span>Connected peers</span><code id="proof-peers">0</code></div>
+        <div class="proof-row"><span>Peers</span><code id="proof-peers">0</code></div>
       </section>
       <section class="proof-section">
         <div class="field-label">Event log</div>
         <pre id="proof-log" class="mono"></pre>
       </section>
       <section class="proof-section privacy-note">
-        Translation runs on this device. Messages travel directly between reachable peers; peer
-        discovery requires network access.
+        Translation runs on this device. Messages travel between reachable peers; discovery needs
+        network access.
       </section>
     </aside>
 
