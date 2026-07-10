@@ -57,6 +57,12 @@ function createRelayNode({ emit = () => {}, swarm = new Hyperswarm() } = {}) {
     const topic = deriveRoomKey(joined)
     discovery = swarm.join(topic, { server: true, client: true })
     await discovery.flushed()
+    // Best-effort DHT connect wait so two local peers can find each other before publish.
+    try {
+      await Promise.race([swarm.flush(), new Promise((resolve) => setTimeout(resolve, 8000))])
+    } catch {
+      // discovery can still proceed asynchronously
+    }
     const identity = {
       topic: b4a.toString(topic, 'hex'),
       peerId

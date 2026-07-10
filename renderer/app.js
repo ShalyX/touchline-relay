@@ -499,11 +499,14 @@
     els.preview.classList.toggle('ready', Boolean(previewReady))
     els.sampleFlag.hidden = Boolean(state.preview)
     if (state.preview) {
+      const lang = state.preview.targetLanguage || 'es'
       els.originalPreview.textContent = state.preview.original
       els.translatedPreview.textContent = state.preview.translated
+      els.translatedPreview.setAttribute('lang', lang)
     } else {
       els.originalPreview.textContent = 'Translate an announcement to preview the original here.'
-      els.translatedPreview.textContent = 'Local Spanish translation will appear here.'
+      els.translatedPreview.textContent = 'Local translation will appear here.'
+      els.translatedPreview.setAttribute('lang', els.language?.value || 'es')
       els.translationMeta.textContent = 'No local translation yet'
     }
 
