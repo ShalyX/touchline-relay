@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Notification } = require('electron')
 const os = require('os')
 const path = require('path')
+const fs = require('fs')
 
 // Chromium refuses to start as root unless the sandbox is disabled. Apply early so
 // hermesbox / CI / container demos work without a non-root user.
@@ -47,12 +48,17 @@ cmd.parse(
   )
 )
 
-const pearStore = cmd.flags.storage
+const pearStoreFlag = cmd.flags.storage
+// Electron setPath('userData') requires an absolute path (Windows rejects ./demo-a).
+const pearStore = pearStoreFlag ? path.resolve(process.cwd(), pearStoreFlag) : null
 const updates = pkg.updates === false ? false : cmd.flags.updates
 const remoteDebuggingPort = cmd.flags.remoteDebuggingPort
 
 if (remoteDebuggingPort) app.commandLine.appendSwitch('remote-debugging-port', remoteDebuggingPort)
-if (pearStore) app.setPath('userData', pearStore)
+if (pearStore) {
+  fs.mkdirSync(pearStore, { recursive: true })
+  app.setPath('userData', pearStore)
+}
 
 ipcMain.on('pkg', (evt) => {
   evt.returnValue = pkg
