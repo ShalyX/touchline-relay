@@ -62,7 +62,6 @@ rm -rf node_modules/electron
 npm rebuild electron
 ```
 
-
 ## Windows setup (recording on a PC)
 
 If you see:
@@ -183,6 +182,19 @@ npm run lint
 npm run qvac:smoke
 npm run package
 ```
+
+## Docket evidence for paid changes
+
+This repository's pilot task is `dkt-8eaed55e224940e4ae9edbe1` on the Docket Studio Devnet contract `0x729C8B0451Cc42Cc4abdF9b5ba468ce14eF79057`. The agreement and its weighted acceptance criteria are frozen in the root [`docket.yml`](docket.yml); changing that file after registration invalidates the evidence hash.
+
+Every public pull request runs [`.github/workflows/docket-evidence.yml`](.github/workflows/docket-evidence.yml). The workflow checks out the immutable PR head, runs the vendored dependency-free action in `.docket/github-action`, and writes two JSON objects to the successful run's job summary:
+
+1. Open the pull request's successful **Docket evidence** workflow run.
+2. Open its job summary and copy both the **Manifest** and **Proof** JSON objects.
+3. Open the matching case in Docket. Connect the assigned worker wallet, paste both objects into **Submit delivery**, and sign the transaction.
+4. The browser checks the proof against the onchain task and submits only the compact public manifest. Docket independently fetches the public PR, commit, workflow run, and frozen `docket.yml` if adjudication is needed.
+
+The workflow uses a read-only checkout token and does not post comments, upload artifacts, call an external API, or submit an onchain transaction. Keep credentials, private issue data, customer data, and raw logs out of the public Docket configuration and evidence.
 
 What those mean:
 
