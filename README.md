@@ -185,7 +185,7 @@ npm run package
 
 ## Docket evidence for paid changes
 
-This repository's pilot task is `dkt-8eaed55e224940e4ae9edbe1` on the Docket Studio Devnet contract `0x0c45dBe4C691Bc1B0c15dE6DBc97Eda278a5EA92`. The agreement and its weighted acceptance criteria are frozen in the root [`docket.yml`](docket.yml); changing that file after registration invalidates the evidence hash.
+This repository's pilot task is `dkt-8eaed55e224940e4ae9edbe1` on the Docket Studio Devnet contract `0x729C8B0451Cc42Cc4abdF9b5ba468ce14eF79057`. The agreement and its weighted acceptance criteria are frozen in the root [`docket.yml`](docket.yml); changing that file after registration invalidates the evidence hash.
 
 Every public pull request runs [`.github/workflows/docket-evidence.yml`](.github/workflows/docket-evidence.yml). The workflow checks out the immutable PR head, runs the vendored dependency-free action in `.docket/github-action`, and writes two JSON objects to the successful run's job summary:
 
