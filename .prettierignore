@@ -5,3 +5,5 @@ build/*.xml
 flatpak/*.xml
 node_modules/
 out/
+docket.yml
+.docket/github-action/test/fixtures/
