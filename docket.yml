@@ -1,21 +1,21 @@
 # Public Docket agreement configuration. Keep this file unchanged after registration.
 version: 2
-task_id: dkt-dispute-7030-20260912
+task_id: dkt-appeal-drill-20260912
 repository_url: https://github.com/shalyx/touchline-relay
 worker_address: 0xfb4f1c40f05d3690d1b3da5468e2c50964885718
-title: "Document a Docket disputed settlement pilot"
+title: "Exercise the native GenLayer appeal path"
 escrow_wei: "1000000000000000000"
 
 criteria:
-  - id: document-dispute-pilot
+  - id: document-appeal-path
     weight_bps: 4000
-    description: "Add docs/docket-dispute-pilot.md with a section titled \"Observed behavior\" that explains the purpose of this disputed-settlement pilot."
+    description: "Add docs/appeal-drill.md with a section titled \"Appeal path\" that explains this native consensus appeal drill."
   - id: actions-run-succeeds
     weight_bps: 3000
     description: "The submitted pull request has a successful GitHub Actions pull_request workflow run linked to its exact head commit."
-  - id: add-machine-receipt
+  - id: add-appeal-receipt
     weight_bps: 3000
-    description: "Add docs/docket-dispute-pilot.json containing a JSON object with task_id, expected_passed_bps, and expected_worker_amount_wei fields."
+    description: "Add docs/appeal-drill.json containing task_id and appeal_charge_wei fields."
 
 github:
   provider: github
